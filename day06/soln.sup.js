@@ -50,8 +50,6 @@ function search(grid, pos) {
   }
   return visited;
 }
-
-
 function oob(grid, pos) {
   return pos[0] < 0 || pos[1] < 0 || pos[0] >= grid.length ||
     pos[1] >= grid[0].length;
