@@ -82,24 +82,21 @@ function part2(input) {
     }
 
     seen.clear();
+    stack = [];
     let sides = 0;
     let [pdy, pdx] = [start[1][0] - start[0][0], start[1][1] - start[0][1]];
     seen.add(String(start));
-    stack = [start];
-    while (stack.length > 0) {
-      const [a, b] = stack.pop();
-      const nexts = perimeter.follow(start);
-      console.log('nexts', nexts);
-      for (const [na, nb] of nexts) {
-        let [dy, dx] = [nb[0] - na[0], nb[1] - na[1]];
-        if (dy !== pdy || dx !== pdx) {
-          sides++;
-        }
-        [pdy, pdx] = [dy, dx];
-        start = [na, nb];
-        if (!seen.has(String(start))) stack.push(start);
-        seen.add(String(start));
+    while (true) {
+      const [a, b] = start;
+      const [na, nb] = perimeter.follow(start);
+      let [dy, dx] = [nb[0] - na[0], nb[1] - na[1]];
+      if (dy !== pdy || dx !== pdx) {
+        sides++;
       }
+      [pdy, pdx] = [dy, dx];
+      start = [na, nb];
+      if (seen.has(String(start))) break;
+      seen.add(String(start));
     }
 
     console.log(region, 'area', area, 'sides', sides);
@@ -114,7 +111,7 @@ class Bigraph {
     (this.map[a] ||= []).push(b);
     (this.map[b] ||= []).push(a);
   }
-  follow([a, b]) { return this.map[b].filter(c => String(c) !== String(a)).map(n => [b, n]); }
+  follow([a, b]) { return [b, this.map[b].find(c => String(c) !== String(a))]; }
   get empty() { return Object.keys(this.map).length === 0; }
 }
 
