@@ -90,8 +90,10 @@ function part2(input) {
       while (true) {
         const [a, b] = start;
         const [na, nb] = perimeter.follow(start);
+        console.log(`(${a.join(',')}) -> (${b.join(',')}) => (${na.join(',')}) -> (${nb.join(',')})`);
         let [dy, dx] = [nb[0] - na[0], nb[1] - na[1]];
         if (dy !== pdy || dx !== pdx) {
+          console.log('---- TURN');
           sides++;
         }
         [pdy, pdx] = [dy, dx];
