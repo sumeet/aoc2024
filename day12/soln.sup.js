@@ -57,15 +57,20 @@ function part2(input) {
     }
     if (!found) break;
     const seen = new Set();
-    const stack = [found];
-    let perimeter = [];
+    let stack = [found];
+    let perimeter = new Bigraph;
     let area = 0;
+    let start = undefined;
     while (stack.length > 0) {
       const [y, x, dirId] = stack.pop();
       if (seen.has(String([y, x]))) continue;
       const cell = grid?.[y]?.[x];
       if (cell !== region) {
-        perimeter.push([y, x, dirId]);
+        const [dy, dx, edges] = dirs[dirId];
+        const [origY, origX] = [y - dy, x - dx];
+        const [a, b] = edges.map(([edy, edx]) => [origY + edy, origX + edx]);
+        perimeter.add([a, b]);
+        start = [a, b];
       } else {
         grid[y][x] = '.';
         area++;
@@ -76,43 +81,22 @@ function part2(input) {
       }
     }
 
+    seen.clear();
+    stack = [];
     let sides = 0;
-    while (perimeter.length > 0) {
-      const [y, x, dirId] = perimeter.pop();
-
-      // y
-      let next = [];
-      let side = [x];
-      for (const [ry, rx, rdirId] of perimeter) {
-        if (rdirId === dirId && ry === y) side.push(rx);
-        else next.push([ry, rx, rdirId]);
+    let [pdy, pdx] = [start[1][0] - start[0][0], start[1][1] - start[0][1]];
+    seen.add(String(start));
+    while (true) {
+      const [a, b] = start;
+      const [na, nb] = perimeter.follow(start);
+      let [dy, dx] = [nb[0] - na[0], nb[1] - na[1]];
+      if (dy !== pdy || dx !== pdx) {
+        sides++;
       }
-      if (side.length > 1) {
-        side.sort();
-        let prev = undefined;
-        for (const s of side) {
-          if (s !== prev + 1) sides++;
-          prev = s;
-        }
-        perimeter = next;
-        continue;
-      }
-
-      // x
-      next = [];
-      side = [y];
-      for (const [ry, rx, rdirId] of perimeter) {
-        if (rdirId === dirId && rx === x) side.push(ry);
-        else next.push([ry, rx, rdirId]);
-      }
-      side.sort();
-      prev = undefined;
-      for (const s of side) {
-        if (s !== prev + 1) sides++;
-        prev = s;
-      }
-
-      perimeter = next;
+      [pdy, pdx] = [dy, dx];
+      start = [na, nb];
+      if (seen.has(String(start))) break;
+      seen.add(String(start));
     }
 
     console.log(region, 'area', area, 'sides', sides);
@@ -121,13 +105,46 @@ function part2(input) {
   return total;
 }
 
-const dirs = [[1, 0], [0, 1], [-1, 0], [0, -1]];
+class Bigraph {
+  constructor() { this.map = {}; }
+  add([a, b]) {
+    (this.map[a] ||= []).push(b);
+    (this.map[b] ||= []).push(a);
+  }
+  follow([a, b]) { return [b, this.map[b].find(c => String(c) !== String(a))]; }
+  get empty() { return Object.keys(this.map).length === 0; }
+}
+
+// corner      corner
+// [0,0]  UP   [0,1]
+//    +------------+
+//  L |            | R
+//  E |    cell    | I     
+//  F |    (0,0)   | G
+//  T |            | H
+//    |            | T
+//    +------------+
+// [1,0]   DOWN   [1,1]
+// corner      corner
+
+const dirs = [ // y, x
+  // DOWN
+  [1, 0, [[1, 0], [1, 1]]],
+  // RIGHT
+  [0, 1, [[0, 1], [1, 1]]],
+  // UP
+  [-1, 0, [[0, 0], [0, 1]]],
+  // LEFT
+  [0, -1, [[0, 0], [1, 0]]],
+];
 
 const fs = require('fs');
 const input = fs.readFileSync('sample.txt', 'utf-8').trim();
 //const input = fs.readFileSync('input.txt', 'utf-8').trim();
+//
+//const input = "AAAA";
 
-console.log('part 1');
-console.log(part1(input));
-console.log('part 2');
+//console.log('part 1');
+//console.log(part1(input));
+//console.log('part 2');
 console.log(part2(input));
