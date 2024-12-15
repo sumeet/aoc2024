@@ -60,7 +60,6 @@ function part2(input) {
     let stack = [found];
     let perimeter = new Bigraph;
     let area = 0;
-    let start = undefined;
     while (stack.length > 0) {
       const [y, x, dirId] = stack.pop();
       if (seen.has(String([y, x]))) continue;
@@ -70,7 +69,6 @@ function part2(input) {
         const [origY, origX] = [y - dy, x - dx];
         const [a, b] = edges.map(([edy, edx]) => [origY + edy, origX + edx]);
         perimeter.add([a, b]);
-        start = [a, b];
       } else {
         grid[y][x] = '.';
         area++;
@@ -82,21 +80,25 @@ function part2(input) {
     }
 
     seen.clear();
-    stack = [];
     let sides = 0;
-    let [pdy, pdx] = [start[1][0] - start[0][0], start[1][1] - start[0][1]];
-    seen.add(String(start));
-    while (true) {
-      const [a, b] = start;
-      const [na, nb] = perimeter.follow(start);
-      let [dy, dx] = [nb[0] - na[0], nb[1] - na[1]];
-      if (dy !== pdy || dx !== pdx) {
-        sides++;
-      }
-      [pdy, pdx] = [dy, dx];
-      start = [na, nb];
-      if (seen.has(String(start))) break;
+    for (let start of perimeter.allEdges) {
+      if (seen.has(String(start)) || seen.has(String([start[1], start[0]]))) continue;
+      console.log('region', region, 'start', start);
+
+      let [pdy, pdx] = [start[1][0] - start[0][0], start[1][1] - start[0][1]];
       seen.add(String(start));
+      while (true) {
+        const [a, b] = start;
+        const [na, nb] = perimeter.follow(start);
+        let [dy, dx] = [nb[0] - na[0], nb[1] - na[1]];
+        if (dy !== pdy || dx !== pdx) {
+          sides++;
+        }
+        [pdy, pdx] = [dy, dx];
+        start = [na, nb];
+        if (seen.has(String(start))) break;
+        seen.add(String(start));
+      }
     }
 
     console.log(region, 'area', area, 'sides', sides);
@@ -113,6 +115,19 @@ class Bigraph {
   }
   follow([a, b]) { return [b, this.map[b].find(c => String(c) !== String(a))]; }
   get empty() { return Object.keys(this.map).length === 0; }
+  get allEdges() {
+    const seen = new Set();
+    const edges = [];
+    for (let [a, bs] of Object.entries(this.map)) {
+      a = a.split(',').map(Number);
+      for (const b of bs) {
+        if (seen.has(String([a, b])) || seen.has(String([b, a]))) continue;
+        edges.push([a, b]);
+        seen.add(String([a, b]));
+      }
+    }
+    return edges;
+  }
 }
 
 // corner      corner
@@ -139,8 +154,8 @@ const dirs = [ // y, x
 ];
 
 const fs = require('fs');
-const input = fs.readFileSync('sample.txt', 'utf-8').trim();
 //const input = fs.readFileSync('input.txt', 'utf-8').trim();
+const input = fs.readFileSync('sample.txt', 'utf-8').trim();
 //
 //const input = "AAAA";
 
