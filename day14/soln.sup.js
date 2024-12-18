@@ -58,6 +58,8 @@ function part2(input) {
   let lines = input.trim().split('\n');
   let robots = lines.map(line => line.match(/-?\d+/g).map(Number));
 
+  const initRobots = String(robots);
+
   outer: for (let i = 0 ; i < 1_000_000; i++) {
     for (let [j, [px, py, vx, vy]] of robots.entries()) {
       [py, px] = [
@@ -67,46 +69,23 @@ function part2(input) {
       robots[j] = [px, py, vx, vy];
     }
 
-    let maxNumConsecutiveIncreases = 0;
-    let numInARowWithIncrease = 0;
-    let prevWasIncrease = false;
-    let prev = 0;
-    for (let row = 0; row < HEIGHT; row++) {
-      let numPerRow = robots.filter(([px, py]) => py === row).length;
-      let thisIsIncrease = numPerRow > prev;
-      if (thisIsIncrease) {
-        if (prevWasIncrease) {
-          numInARowWithIncrease++;
-          maxNumConsecutiveIncreases = Math.max(maxNumConsecutiveIncreases, numInARowWithIncrease);
-        } else {
-          numInARowWithIncrease = 1;
-        }
-        prevWasIncrease = true;
-      } else {
-        prevWasIncrease = false;
-        numInARowWithIncrease = 0;
-      }
-      prev = numPerRow;
+    if (String(robots) === initRobots) {
+      console.log(i);
     }
 
-    if (maxNumConsecutiveIncreases >= 5) {
-      console.log(`Time: ${i+1} -- ${maxNumConsecutiveIncreases}`);
-      const graph = Array(HEIGHT).fill().map(() => Array(WIDTH).fill('.'));
-      for (const [px, py, vx, vy] of robots) {
-        if (graph[py][px] === '.') {
-          graph[py][px] = 0;
-        }
-        graph[py][px]++;
-      }
-      console.log(`----- Time: ${i+1} ------`);
-      for (let row of graph) {
-        console.log(row.join(''));
-      }
-      console.log('\n\n');
-    }
-
-    //console.log(`Time: ${i+1}`);
-    //console.log(numWithIncrease);
+    //console.log(`Time: ${i+1} -- ${maxNumConsecutiveIncreases}`);
+    //const graph = Array(HEIGHT).fill().map(() => Array(WIDTH).fill('.'));
+    //for (const [px, py, vx, vy] of robots) {
+    //  if (graph[py][px] === '.') {
+    //    graph[py][px] = 0;
+    //  }
+    //  graph[py][px]++;
+    //}
+    //console.log(`----- Time: ${i+1} ------`);
+    //for (let row of graph) {
+    //  console.log(row.join(''));
+    //}
+    //console.log('\n\n');
 
   }
 }
