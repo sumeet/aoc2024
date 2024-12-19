@@ -85,6 +85,11 @@ function part1(input) {
 function part2(input) {
   let [grid, instructions] = input.trim().split('\n\n');
   grid = grid.replaceAll('#', '##').replaceAll('O', '[]').replaceAll('.', '..').replaceAll('@', '@.');
+
+  console.log('initial grid');
+  console.log('--------------');
+  console.log(grid);
+
   grid = grid.split('\n').map(l => l.split(''));
   instructions = instructions.replaceAll('\n', '');
   map = {};
@@ -119,8 +124,7 @@ function part2(input) {
         throw new Error(`Invalid instruction: ${instr}`);
     }
 
-    console.log('---------------------');
-    console.log('dir:', dir);
+    console.log('dir:', instr);
     console.log('---------------------');
 
     const workStack = [];
@@ -161,7 +165,6 @@ function part2(input) {
     }
     playerPos = workStack.pop();
 
-    console.log('---------------------');
     for (let y = 0; y < grid.length; y++) {
       let line = '';
       for (let x = 0; x < grid[y].length; x++) {
@@ -187,8 +190,8 @@ function part2(input) {
 
 const fs = require('fs');
 //const input = fs.readFileSync('input.txt', 'utf8');
-//const input = fs.readFileSync('sample-large.txt', 'utf8');
-const input = fs.readFileSync('sample2.txt', 'utf8');
+const input = fs.readFileSync('sample-large.txt', 'utf8');
+//const input = fs.readFileSync('sample2.txt', 'utf8');
 
 //console.log(part1(input));
 console.log(part2(input));
