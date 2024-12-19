@@ -81,23 +81,26 @@ function part2(input) {
 
     seen.clear();
     let sides = 0;
-    for (let start of perimeter.allEdges) {
+    for (const start of perimeter.allEdges) {
       if (seen.has(String(start)) || seen.has(String([start[1], start[0]]))) continue;
       console.log('region', region, 'start', start);
 
       let [pdy, pdx] = [start[1][0] - start[0][0], start[1][1] - start[0][1]];
       seen.add(String(start));
+      let next = start;
       while (true) {
-        const [a, b] = start;
-        const [na, nb] = perimeter.follow(start);
+        const [a, b] = next;
+        const [na, nb] = perimeter.follow(next);
+        console.log(`(${a.join(',')}) -> (${b.join(',')}) => (${na.join(',')}) -> (${nb.join(',')})`);
         let [dy, dx] = [nb[0] - na[0], nb[1] - na[1]];
         if (dy !== pdy || dx !== pdx) {
+          console.log('---- TURN');
           sides++;
         }
         [pdy, pdx] = [dy, dx];
-        start = [na, nb];
-        if (seen.has(String(start))) break;
-        seen.add(String(start));
+        next = [na, nb];
+        if (seen.has(String(next))) break;
+        seen.add(String(next));
       }
     }
 
@@ -113,7 +116,21 @@ class Bigraph {
     (this.map[a] ||= []).push(b);
     (this.map[b] ||= []).push(a);
   }
-  follow([a, b]) { return [b, this.map[b].find(c => String(c) !== String(a))]; }
+  follow([a, b]) {
+    let filtered = this.map[b].filter(c => String(c) !== String(a));
+    if (filtered.length > 1) {
+      // pick the one that's turning clockwise
+      const c = filtered.find(c => {
+        const [dy, dx] = [c[0] - b[0], c[1] - b[1]];
+        const [pdy, pdx] = [a[0] - b[0], a[1] - b[1]];
+        return dy * pdx - dx * pdy > 0;
+      });
+      if (c) return [b, c];
+      console.log('--------------- from', [a, b], 'to', filtered);
+      throw new Error(`found 2 places to go need to pick1`);
+    }
+    return [b, this.map[b].find(c => String(c) !== String(a))];
+  }
   get empty() { return Object.keys(this.map).length === 0; }
   get allEdges() {
     const seen = new Set();
@@ -154,8 +171,8 @@ const dirs = [ // y, x
 ];
 
 const fs = require('fs');
-//const input = fs.readFileSync('input.txt', 'utf-8').trim();
-const input = fs.readFileSync('sample.txt', 'utf-8').trim();
+const input = fs.readFileSync('input.txt', 'utf-8').trim();
+//const input = fs.readFileSync('sample.txt', 'utf-8').trim();
 //
 //const input = "AAAA";
 
