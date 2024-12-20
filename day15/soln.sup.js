@@ -86,9 +86,9 @@ function part2(input) {
   let [grid, instructions] = input.trim().split('\n\n');
   grid = grid.replaceAll('#', '##').replaceAll('O', '[]').replaceAll('.', '..').replaceAll('@', '@.');
 
-  console.log('initial grid');
-  console.log('--------------');
-  console.log(grid);
+  //console.log('initial grid');
+  //console.log('--------------');
+  //console.log(grid);
 
   grid = grid.split('\n').map(l => l.split(''));
   instructions = instructions.replaceAll('\n', '');
@@ -124,8 +124,8 @@ function part2(input) {
         throw new Error(`Invalid instruction: ${instr}`);
     }
 
-    console.log('dir:', instr);
-    console.log('---------------------');
+    //console.log('dir:', instr);
+    //console.log('---------------------');
 
     const workStack = [];
     //let nextPos = playerPos;
@@ -156,26 +156,32 @@ function part2(input) {
       }
     }
     if (workStack.length === 0) continue;
+
+    workStack.sort(([ay, ax], [by, bx]) => {
+      // the sort depends on the direction
+      if (dir[0] === 1) {
+        return ay - by;
+      } else if (dir[0] === -1) {
+        return by - ay;
+      } else if (dir[1] === 1) {
+        return ax - bx;
+      }
+      return bx - ax;
+    });
+
     while (workStack.length > 1) {
+      //console.log('workStack', workStack);
       let next = workStack.pop();
       let prev = [next[0] - dir[0], next[1] - dir[1]];
       let prevCell = map[prev];
       map[prev] = '.';
       map[next] = prevCell;
+      //printGrid(grid, playerPos);
     }
     playerPos = workStack.pop();
 
-    for (let y = 0; y < grid.length; y++) {
-      let line = '';
-      for (let x = 0; x < grid[y].length; x++) {
-        if (playerPos[0] === y && playerPos[1] === x) {
-          line += '@';
-        } else {
-          line += map[[y, x]];
-        }
-      }
-      console.log(line);
-    }
+    //console.log('--done--');
+    //printGrid(grid, playerPos);
   }
 
   let total = 0;
@@ -188,10 +194,25 @@ function part2(input) {
   return total;
 }
 
+function printGrid(grid, playerPos) {
+  for (let y = 0; y < grid.length; y++) {
+    let line = '';
+    for (let x = 0; x < grid[y].length; x++) {
+      if (playerPos[0] === y && playerPos[1] === x) {
+        line += '@';
+      } else {
+        line += map[[y, x]];
+      }
+    }
+    console.log(line);
+  }
+}
+
 const fs = require('fs');
-//const input = fs.readFileSync('input.txt', 'utf8');
-const input = fs.readFileSync('sample-large.txt', 'utf8');
+const input = fs.readFileSync('input.txt', 'utf8');
+//const input = fs.readFileSync('sample-large.txt', 'utf8');
 //const input = fs.readFileSync('sample2.txt', 'utf8');
+//const input = fs.readFileSync('custom.txt', 'utf8');
 
 //console.log(part1(input));
 console.log(part2(input));
