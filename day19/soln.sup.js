@@ -1,25 +1,17 @@
-const fs = require('fs');
-//const input = fs.readFileSync('sample.txt', 'utf-8');
-const input = fs.readFileSync('input.txt', 'utf-8');
-
-let cache1 = {};
+let cache = {};
 function solve(avail, target) {
-  let cached = cache1[[avail, target]];
+  let cached = cache[[avail, target]];
   if (cached !== undefined) return cached;
-
-  function inner() {
-    const availThis = avail.filter(pat => target.includes(pat));
-    for (const pat of avail) {
-      if (pat === target) return true;
-      if (target.startsWith(pat) && solve(availThis, target.substring(pat.length))) {
-        return true;
-      }
+  const availThis = avail.filter(pat => target.includes(pat));
+  let count = 0;
+  for (const pat of avail) {
+    if (pat === target) count++;
+    if (target.startsWith(pat)) {
+      count += solve(availThis, target.substring(pat.length));
     }
-    return false;
   }
-  let res = inner();
-  cache1[[avail, target]] = res;
-  return res;
+  cache[[avail, target]] = count;
+  return count;
 }
 
 function part1(input) {
@@ -28,12 +20,11 @@ function part1(input) {
   targets = targets.split("\n");
   let total = 0;
   for (const target of targets) {
-    total += solve(avail, target);
+    total += solve(avail, target) > 0;
   }
   return total;
 }
 
-let cache2 = {};
 function part2(input) {
   let [avail, targets] = input.split('\n\n');
   avail = avail.split(", ");
@@ -44,6 +35,11 @@ function part2(input) {
   }
   return total;
 }
+
+
+const fs = require('fs');
+const input = fs.readFileSync('input.txt', 'utf-8');
+//const input = fs.readFileSync('sample.txt', 'utf-8');
 
 console.log('part 1');
 console.log(part1(input));
