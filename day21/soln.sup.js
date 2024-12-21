@@ -3,24 +3,27 @@ const fs = require('fs');
 const input = fs.readFileSync('input.txt', 'utf-8').trim();
 
 
-const grid = input.split('\n').map(row => row.split(''));
-
-let start;
-let end;
-let map = {};
-for (let i = 0; i < grid.length; i++) {
-  for (let j = 0; j < grid[i].length; j++) {
-    if (grid[i][j] === 'S') {
-      map[[i, j]] = '.';
-      start = [i, j];
-    } else if (grid[i][j] === 'E') {
-      map[[i, j]] = '.';
-      end = [i, j];
-    } else {
-      map[[i, j]] = grid[i][j];
+function parse(input) {
+  const grid = input.trim().split('\n').map(row => row.split(''));
+  let start;
+  let end;
+  let map = {};
+  for (let i = 0; i < grid.length; i++) {
+    for (let j = 0; j < grid[i].length; j++) {
+      if (grid[i][j] === 'S') {
+        map[[i, j]] = '.';
+        start = [i, j];
+      } else if (grid[i][j] === 'E') {
+        map[[i, j]] = '.';
+        end = [i, j];
+      } else {
+        map[[i, j]] = grid[i][j];
+      }
     }
   }
+  return [grid, map, start, end];
 }
+
 
 const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
 
