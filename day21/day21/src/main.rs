@@ -5,15 +5,16 @@ use std::iter::{once, repeat_n};
 use std::sync::LazyLock;
 
 fn main() {
-    dbg!(Pad::dir());
-
-    // let mut pads = once(Pad::num())
-    //     .chain(repeat_n(Pad::dir(), 3))
-    //     .collect::<Vec<_>>();
-    //
-    // let code = SAMPLE.split("\n").next().unwrap();
-    //
-    // dbg!(code);
+    let mut pads = once(Pad::num())
+        .chain(repeat_n(Pad::dir(), 3))
+        .collect::<Vec<_>>();
+    let code = SAMPLE.split("\n").next().unwrap();
+    let mut path_for_a = code.chars().collect::<Vec<_>>();
+    let mut path_for_b = vec![];
+    for a in 0..pads.len() - 1 {
+        let pad_a = &mut pads[a];
+        let pad_b = &mut pads[a + 1];
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -48,17 +49,17 @@ impl Grid {
     }
 }
 
-static DIR_BY_CHAR: LazyLock<BTreeMap<char, (i8, i8)>> = LazyLock::new(|| {
-    let mut dirs = BTreeMap::new();
-    dirs.insert('^', (-1, 0));
-    dirs.insert('v', (1, 0));
-    dirs.insert('<', (0, -1));
-    dirs.insert('>', (0, 1));
-    dirs
-});
-
-static CHAR_BY_DIR: LazyLock<BTreeMap<(i8, i8), char>> =
-    LazyLock::new(|| DIR_BY_CHAR.iter().map(|(c, d)| (*d, *c)).collect());
+// static DIR_BY_CHAR: LazyLock<BTreeMap<char, (i8, i8)>> = LazyLock::new(|| {
+//     let mut dirs = BTreeMap::new();
+//     dirs.insert('^', (-1, 0));
+//     dirs.insert('v', (1, 0));
+//     dirs.insert('<', (0, -1));
+//     dirs.insert('>', (0, 1));
+//     dirs
+// });
+//
+// static CHAR_BY_DIR: LazyLock<BTreeMap<(i8, i8), char>> =
+//     LazyLock::new(|| DIR_BY_CHAR.iter().map(|(c, d)| (*d, *c)).collect());
 
 #[derive(Clone, Debug)]
 struct Pad {
@@ -66,19 +67,6 @@ struct Pad {
     all_shortest_paths: BTreeMap<(char, char), Vec<Vec<char>>>,
     current: char,
 }
-
-// fn paths_from(grid: Grid, from: char, to: char) -> Vec<Vec<char>> {
-//     let mut paths = [];
-//     let mut src = *grid.get(&from).unwrap();
-//     let dst = *grid.get(&to).unwrap();
-//     while (src != dst) {
-//         for dir in using_dirs {
-//             let dydx = *DIRS.get(dir).unwrap();
-//             let new_src = (src.0 + dydx.0, src.1 + dydx.1);
-//         }
-//     }
-//     paths
-// }
 
 impl Pad {
     fn new(pos_by_char: BTreeMap<char, (i8, i8)>) -> Self {
@@ -136,40 +124,11 @@ impl Pad {
         }
     }
 
-    fn move_in_x_direction(
-        grid: &Grid,
-        mut dx: i8,
-        path: &mut Vec<char>,
-        cur: &mut (i8, i8),
-    ) -> i8 {
-        while (dx != 0) {
-            let next = (cur.0, cur.1 + dx.signum());
-            if !grid.has_pos(next) {
-                break;
-            }
-            path.push(if dx > 0 { '>' } else { '<' });
-            *cur = next;
-            dx -= dx.signum();
-        }
-        dx
-    }
-
-    fn move_in_y_direction(
-        grid: &Grid,
-        mut dy: i8,
-        path: &mut Vec<char>,
-        cur: &mut (i8, i8),
-    ) -> i8 {
-        while (dy != 0) {
-            let next = (cur.0 + dy.signum(), cur.1);
-            if !grid.has_pos(next) {
-                break;
-            }
-            path.push(if dy > 0 { 'v' } else { '^' });
-            *cur = next;
-            dy -= dy.signum();
-        }
-        dy
+    fn possible_paths_to(&self, to: char) -> Vec<Vec<char>> {
+        self.all_shortest_paths
+            .get(&(self.current, to))
+            .unwrap()
+            .clone()
     }
 
     //     +---+---+
@@ -210,6 +169,42 @@ impl Pad {
         grid.insert('0', (3, 1));
         grid.insert('A', (3, 2));
         Self::new(grid)
+    }
+
+    fn move_in_x_direction(
+        grid: &Grid,
+        mut dx: i8,
+        path: &mut Vec<char>,
+        cur: &mut (i8, i8),
+    ) -> i8 {
+        while (dx != 0) {
+            let next = (cur.0, cur.1 + dx.signum());
+            if !grid.has_pos(next) {
+                break;
+            }
+            path.push(if dx > 0 { '>' } else { '<' });
+            *cur = next;
+            dx -= dx.signum();
+        }
+        dx
+    }
+
+    fn move_in_y_direction(
+        grid: &Grid,
+        mut dy: i8,
+        path: &mut Vec<char>,
+        cur: &mut (i8, i8),
+    ) -> i8 {
+        while (dy != 0) {
+            let next = (cur.0 + dy.signum(), cur.1);
+            if !grid.has_pos(next) {
+                break;
+            }
+            path.push(if dy > 0 { 'v' } else { '^' });
+            *cur = next;
+            dy -= dy.signum();
+        }
+        dy
     }
 }
 
