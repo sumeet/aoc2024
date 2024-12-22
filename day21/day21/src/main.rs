@@ -109,7 +109,8 @@ impl Pad {
             (1, _) => paths.first().unwrap(),
             (_, Some(parent)) => paths
                 .iter()
-                .min_by_key(|p| parent.distance_to_char(*p.iter().next().unwrap()))
+                // .min_by_key(|p| parent.distance_to_char(*p.iter().next().unwrap()))
+                .min_by_key(|p| parent.distance_to_path(p))
                 .unwrap(),
             // it doesn't matter, just pick one
             (_, None) => paths.iter().next().unwrap(),
@@ -126,14 +127,28 @@ impl Pad {
         }
     }
 
-    fn distance_to_char(&self, c: char) -> usize {
-        // TODO: if this is slow, this could be optimized to just choose the first one
-        // since they're all the same length anyway
-        self.shortest_paths_to(c)
-            .into_iter()
-            .min_by_key(|p| p.len())
-            .unwrap()
-            .len()
+    // fn distance_to_char(&self, c: char) -> usize {
+    //     // TODO: if this is slow, this could be optimized to just choose the first one
+    //     // since they're all the same length anyway
+    //     self.shortest_paths_to(c)
+    //         .into_iter()
+    //         .min_by_key(|p| p.len())
+    //         .unwrap()
+    //         .len()
+    // }
+
+    fn distance_to_path(&self, path: &[char]) -> usize {
+        let mut total = 0;
+        let mut from = self.current;
+        for to in path {
+            total += self.shortest_paths_from_to(from, *to)
+                .into_iter()
+                .min_by_key(|p| p.len())
+                .unwrap()
+                .len();
+            from = *to;
+        }
+        total
     }
 
     fn new(pos_by_char: BTreeMap<char, (i8, i8)>) -> Self {
@@ -198,6 +213,13 @@ impl Pad {
     fn shortest_paths_to(&self, to: char) -> Vec<Vec<char>> {
         self.all_shortest_paths
             .get(&(self.current, to))
+            .unwrap()
+            .clone()
+    }
+
+    fn shortest_paths_from_to(&self, from: char, to: char) -> Vec<Vec<char>> {
+        self.all_shortest_paths
+            .get(&(from, to))
             .unwrap()
             .clone()
     }
