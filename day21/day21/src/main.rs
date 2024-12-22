@@ -8,13 +8,16 @@ fn main() {
     let mut pads = once(Pad::num())
         .chain(repeat_n(Pad::dir(), 3))
         .collect::<Vec<_>>();
-    let code = SAMPLE.split("\n").next().unwrap();
-    let mut path_for_a = code.chars().collect::<Vec<_>>();
-    let mut path_for_b = vec![];
-    for a in 0..pads.len() - 1 {
-        let pad_a = &mut pads[a];
-        let pad_b = &mut pads[a + 1];
+    for i in 0..pads.len() {
+        if i < pads.len() - 1 {
+            pads[i].parent = Some(Box::new(pads[i + 1].clone()));
+        }
     }
+    let mut num_pad = pads.remove(0);
+
+    //let code = SAMPLE.split("\n").next().unwrap();
+    //for c in code.chars() {}
+    num_pad.go_to_char_via_shortest_path('0');
 }
 
 #[derive(Clone, Debug)]
@@ -66,9 +69,63 @@ struct Pad {
     grid: Grid,
     all_shortest_paths: BTreeMap<(char, char), Vec<Vec<char>>>,
     current: char,
+    moves_so_far: Vec<char>,
+    parent: Option<Box<Pad>>,
 }
 
 impl Pad {
+    fn go_to_char_via_shortest_path(&mut self, c: char) {
+        println!("going from {} to {}", self.current, c);
+
+        let paths = self.shortest_paths_to(c);
+        let path_to_follow = match (paths.len(), &self.parent) {
+            (0, _) => unreachable!(),
+            (1, _) => paths.first().unwrap(),
+            (_, Some(parent)) => paths
+                .iter()
+                .min_by_key(|p| parent.distance_to_char(*p.iter().next().unwrap()))
+                .unwrap(),
+            // it doesn't matter, just pick one
+            (_, None) => paths.iter().next().unwrap(),
+        };
+        let path_to_follow = path_to_follow.iter().copied().chain(once('A'));
+
+        self.moves_so_far.extend(path_to_follow.clone());
+        self.current = c;
+
+        if let Some(parent) = &mut self.parent {
+            for parent_c in path_to_follow {
+                parent.go_to_char_via_shortest_path(parent_c);
+            }
+        }
+
+        // if paths.len() > 1 {
+        //     panic!("ambiguous shortest path: {:?}", paths);
+        // }
+        // let path = paths.first().unwrap();
+        //
+        // println!("path: {:?}", path);
+        //
+        // self.moves_so_far.extend(path.iter().copied());
+        // self.current = c;
+        //
+        // if let Some(parent) = &mut self.parent {
+        //     for m in path {
+        //         parent.go_to_char_via_shortest_path(*m);
+        //     }
+        // }
+    }
+
+    fn distance_to_char(&self, c: char) -> usize {
+        // TODO: if this is slow, this could be optimized to just choose the first one
+        // since they're all the same length anyway
+        self.shortest_paths_to(c)
+            .into_iter()
+            .min_by_key(|p| p.len())
+            .unwrap()
+            .len()
+    }
+
     fn new(pos_by_char: BTreeMap<char, (i8, i8)>) -> Self {
         let grid = Grid::new(pos_by_char);
 
@@ -76,12 +133,12 @@ impl Pad {
         for (from, (from_y, from_x)) in grid.iter() {
             for (to, (to_y, to_x)) in grid.iter() {
                 let mut paths = vec![];
-                if (from == to) {
+                if from == to {
                     paths.push(vec![]);
                 }
 
-                let dy = (*to_y - *from_y);
-                let dx = (*to_x - *from_x);
+                let dy = *to_y - *from_y;
+                let dx = *to_x - *from_x;
 
                 if (dy != 0) {
                     let mut path = vec![];
@@ -118,13 +175,15 @@ impl Pad {
         }
 
         Self {
+            moves_so_far: vec![],
+            parent: None,
             grid,
             current: 'A',
             all_shortest_paths,
         }
     }
 
-    fn possible_paths_to(&self, to: char) -> Vec<Vec<char>> {
+    fn shortest_paths_to(&self, to: char) -> Vec<Vec<char>> {
         self.all_shortest_paths
             .get(&(self.current, to))
             .unwrap()
@@ -177,7 +236,7 @@ impl Pad {
         path: &mut Vec<char>,
         cur: &mut (i8, i8),
     ) -> i8 {
-        while (dx != 0) {
+        while dx != 0 {
             let next = (cur.0, cur.1 + dx.signum());
             if !grid.has_pos(next) {
                 break;
@@ -195,7 +254,7 @@ impl Pad {
         path: &mut Vec<char>,
         cur: &mut (i8, i8),
     ) -> i8 {
-        while (dy != 0) {
+        while dy != 0 {
             let next = (cur.0 + dy.signum(), cur.1);
             if !grid.has_pos(next) {
                 break;
