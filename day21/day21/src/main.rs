@@ -5,19 +5,19 @@ use std::iter::{once, repeat_n};
 use std::sync::LazyLock;
 
 fn main() {
-    let mut pads = once(Pad::num())
-        .chain(repeat_n(Pad::dir(), 3))
-        .collect::<Vec<_>>();
-    for i in 0..pads.len() {
-        if i < pads.len() - 1 {
-            pads[i].parent = Some(Box::new(pads[i + 1].clone()));
+    let mut total = 0;
+    for code in SAMPLE.split("\n") {
+        let mut num_pad = Pad::init_num_pad();
+        for char in code.chars() {
+            num_pad.go_to_char_via_shortest_path(char);
         }
+        let path = num_pad.last_path();
+        let num_part_of_code = code[0..3].parse::<usize>().unwrap();
+        total += num_part_of_code * path.len();
+        println!("{num_part_of_code} * {path_len} => {path}", path_len = path.len(), path = path.iter().collect::<String>());
+        num_pad.print(0);
     }
-    let mut num_pad = pads.remove(0);
-
-    //let code = SAMPLE.split("\n").next().unwrap();
-    //for c in code.chars() {}
-    num_pad.go_to_char_via_shortest_path('0');
+    println!("part 1: {total}");
 }
 
 #[derive(Clone, Debug)]
@@ -74,9 +74,35 @@ struct Pad {
 }
 
 impl Pad {
-    fn go_to_char_via_shortest_path(&mut self, c: char) {
-        println!("going from {} to {}", self.current, c);
+    fn init_num_pad() -> Self {
+        let mut pads = once(Pad::num())
+            .chain(repeat_n(Pad::dir(), 2))
+            .collect::<Vec<_>>();
+        let mut prev_pad = pads.pop().unwrap();
+        while let Some(mut pad) = pads.pop() {
+            pad.parent = Some(Box::new(prev_pad));
+            prev_pad = pad;
+        }
+        prev_pad
+    }
 
+    fn print(&self, depth: usize) {
+        let moves = self.moves_so_far.iter().collect::<String>();
+        println!("{depth}: {moves}");
+        if let Some(parent) = &self.parent {
+            parent.print(depth + 1);
+        }
+    }
+
+    fn last_path(&self) -> &[char] {
+        if let Some(parent) = &self.parent {
+            parent.last_path()
+        } else {
+            &self.moves_so_far
+        }
+    }
+
+    fn go_to_char_via_shortest_path(&mut self, c: char) {
         let paths = self.shortest_paths_to(c);
         let path_to_follow = match (paths.len(), &self.parent) {
             (0, _) => unreachable!(),
@@ -98,22 +124,6 @@ impl Pad {
                 parent.go_to_char_via_shortest_path(parent_c);
             }
         }
-
-        // if paths.len() > 1 {
-        //     panic!("ambiguous shortest path: {:?}", paths);
-        // }
-        // let path = paths.first().unwrap();
-        //
-        // println!("path: {:?}", path);
-        //
-        // self.moves_so_far.extend(path.iter().copied());
-        // self.current = c;
-        //
-        // if let Some(parent) = &mut self.parent {
-        //     for m in path {
-        //         parent.go_to_char_via_shortest_path(*m);
-        //     }
-        // }
     }
 
     fn distance_to_char(&self, c: char) -> usize {
@@ -169,6 +179,8 @@ impl Pad {
 
                 let min_path_length = paths.iter().map(|p| p.len()).min().unwrap();
                 paths.retain(|p| p.len() == min_path_length);
+                let min_num_dir_changes = paths.iter().map(|p| num_dir_changes(p)).min().unwrap();
+                paths.retain(|p| num_dir_changes(p) == min_num_dir_changes);
                 let (dedup, _) = paths.partition_dedup();
                 all_shortest_paths.insert((*from, *to), dedup.to_vec());
             }
@@ -265,6 +277,10 @@ impl Pad {
         }
         dy
     }
+}
+
+fn num_dir_changes(path: &[char]) -> usize {
+    path.windows(2).filter(|w| w[0] != w[1]).count()
 }
 
 const SAMPLE: &str = "029A
