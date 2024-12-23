@@ -27,12 +27,13 @@ impl SolveResult {
     }
 }
 
-fn solve(pad: &Pad, code: &[char]) -> SolveResult {
-    let paths = pad.all_paths(code);
+fn solve_part_1(pad: &Pad, code: &[char]) -> SolveResult {
+    let sequence = once('A').chain(code.iter().copied()).collect::<Vec<_>>();
+    let paths = pad.all_paths(&sequence);
     let mut winner = None;
     for path in paths {
         if let Some(parent) = &pad.parent {
-            let parent_result = solve(parent, &path);
+            let parent_result = solve_part_1(parent, &path);
             if parent_result.len_of_last_parent()
                 < winner
                     .as_ref()
@@ -73,13 +74,43 @@ fn solve(pad: &Pad, code: &[char]) -> SolveResult {
     winner.unwrap()
 }
 
+// part 2
 fn main() {
+    return part1();
+    let num_pad = Pad::init_num_pad(2);
+    let all_chars = "A0123456789";
+    let mut shortest_paths = BTreeMap::new();
+    for a in all_chars.chars() {
+        for b in all_chars.chars() {
+            let result = solve_part_1(&num_pad, &[a, b]);
+            let path = result.path_of_last_parent();
+            shortest_paths.insert((a, b), path.to_vec());
+        }
+    }
+
+    for code in SAMPLE.split("\n") {
+        let mut path: Vec<char> = vec![];
+        for (a, b) in once('A').chain(code.chars()).zip(code.chars()) {
+            let this_path = shortest_paths.get(&(a, b)).unwrap();
+            println!(
+                "{a} -> {b}: {this_path}",
+                a = a,
+                b = b,
+                this_path = this_path.iter().collect::<String>()
+            );
+            path.extend(this_path);
+        }
+        println!("{}", path.len());
+    }
+}
+
+fn part1() {
     let mut total = 0;
     for code in INPUT.split("\n") {
-        let num_pad = Pad::init_num_pad();
+        let num_pad = Pad::init_num_pad(2);
         // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
         // let path = num_pad.last_path();
-        let result = solve(&num_pad, &code.chars().collect::<Vec<_>>());
+        let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>());
         let path = result.path_of_last_parent();
         let num_part_of_code = code[0..3].parse::<usize>().unwrap();
         total += num_part_of_code * path.len();
@@ -143,9 +174,9 @@ struct Pad {
 }
 
 impl Pad {
-    fn init_num_pad() -> Self {
+    fn init_num_pad(num_robots: usize) -> Self {
         let mut pads = once(Pad::num())
-            .chain(repeat_n(Pad::dir(), 2))
+            .chain(repeat_n(Pad::dir(), num_robots))
             .collect::<Vec<_>>();
         let mut prev_pad = pads.pop().unwrap();
         while let Some(mut pad) = pads.pop() {
@@ -155,13 +186,13 @@ impl Pad {
         prev_pad
     }
 
-    fn print(&self, depth: usize) {
-        let moves = self.moves_so_far.iter().collect::<String>();
-        println!("{depth}: {moves}");
-        if let Some(parent) = &self.parent {
-            parent.print(depth + 1);
-        }
-    }
+    // fn print(&self, depth: usize) {
+    //     let moves = self.moves_so_far.iter().collect::<String>();
+    //     println!("{depth}: {moves}");
+    //     if let Some(parent) = &self.parent {
+    //         parent.print(depth + 1);
+    //     }
+    // }
 
     fn last_path(&self) -> &[char] {
         if let Some(parent) = &self.parent {
@@ -171,26 +202,26 @@ impl Pad {
         }
     }
 
-    fn go_to_path_via_shortest_path(&mut self, path: &[char]) {
-        let paths = self.all_paths(path);
-        let path_to_follow = match (paths.len(), &self.parent) {
-            (0, _) => unreachable!(),
-            (1, _) => paths.first().unwrap(),
-            (_, Some(parent)) => paths
-                .iter()
-                .min_by_key(|p| parent.distance_to_path(p))
-                .unwrap(),
-            // there's no parent, so it doesn't matter, just pick one
-            (_, None) => paths.iter().next().unwrap(),
-        };
-        let path_to_follow = path_to_follow.iter().copied().chain(once('A'));
-        self.moves_so_far.extend(path_to_follow.clone());
-
-        // TODO: gotta recomment this in to get parents working
-        if let Some(parent) = &mut self.parent {
-            parent.go_to_path_via_shortest_path(&path_to_follow.collect::<Vec<_>>());
-        }
-    }
+    // fn go_to_path_via_shortest_path(&mut self, path: &[char]) {
+    //     let paths = self.all_paths(path);
+    //     let path_to_follow = match (paths.len(), &self.parent) {
+    //         (0, _) => unreachable!(),
+    //         (1, _) => paths.first().unwrap(),
+    //         (_, Some(parent)) => paths
+    //             .iter()
+    //             .min_by_key(|p| parent.distance_to_path(p))
+    //             .unwrap(),
+    //         // there's no parent, so it doesn't matter, just pick one
+    //         (_, None) => paths.iter().next().unwrap(),
+    //     };
+    //     let path_to_follow = path_to_follow.iter().copied().chain(once('A'));
+    //     self.moves_so_far.extend(path_to_follow.clone());
+    //
+    //     // TODO: gotta recomment this in to get parents working
+    //     if let Some(parent) = &mut self.parent {
+    //         parent.go_to_path_via_shortest_path(&path_to_follow.collect::<Vec<_>>());
+    //     }
+    // }
 
     // fn go_to_char_via_shortest_path(&mut self, c: char) {
     //     let paths = self.shortest_paths_to(c);
@@ -248,13 +279,15 @@ impl Pad {
         if to.len() == 0 {
             return vec![];
         }
-        let mut prev_char = *to.first().unwrap();
-        let mut all_paths_to_char = self.shortest_paths_to(prev_char);
+
+        let first_char = to[0];
+        let mut prev_char = to[1];
+        let mut all_paths_to_char = self.shortest_paths_from_to(first_char, prev_char);
         for path in all_paths_to_char.iter_mut() {
             path.push('A');
         }
 
-        for &char in to.iter().skip(1) {
+        for &char in to.iter().skip(2) {
             all_paths_to_char = all_paths_to_char
                 .iter()
                 .flat_map(move |path| {
