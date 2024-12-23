@@ -75,7 +75,7 @@ fn solve(pad: &Pad, code: &[char]) -> SolveResult {
 
 fn main() {
     let mut total = 0;
-    for code in SAMPLE.split("\n") {
+    for code in INPUT.split("\n") {
         let num_pad = Pad::init_num_pad();
         // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
         // let path = num_pad.last_path();
@@ -83,20 +83,20 @@ fn main() {
         let path = result.path_of_last_parent();
         let num_part_of_code = code[0..3].parse::<usize>().unwrap();
         total += num_part_of_code * path.len();
-        println!(
-            "{path_len} * {num_part_of_code} => {path}",
-            path_len = path.len(),
-            path = path.iter().collect::<String>()
-        );
+        // println!(
+        //     "{path_len} * {num_part_of_code} => {path}",
+        //     path_len = path.len(),
+        //     path = path.iter().collect::<String>()
+        // );
 
-        let mut result = &result;
-        println!("0: {}", result.path.iter().collect::<String>());
-        let mut i = 0;
-        while let Some(next) = &result.parent_result {
-            i += 1;
-            println!("{i}: {}", next.path.iter().collect::<String>());
-            result = next;
-        }
+        // let mut result = &result;
+        // println!("0: {}", result.path.iter().collect::<String>());
+        // let mut i = 0;
+        // while let Some(next) = &result.parent_result {
+        //     i += 1;
+        //     println!("{i}: {}", next.path.iter().collect::<String>());
+        //     result = next;
+        // }
     }
     println!("part 1: {total}");
 }
@@ -262,9 +262,9 @@ impl Pad {
         }
         let mut prev_char = *to.first().unwrap();
         let mut all_paths_to_char = self.shortest_paths_to(prev_char);
-        //for path in all_paths_to_char.iter_mut() {
-        //    path.push('A');
-        //}
+        for path in all_paths_to_char.iter_mut() {
+            path.push('A');
+        }
 
         for &char in to.iter().skip(1) {
             all_paths_to_char = all_paths_to_char
@@ -273,8 +273,8 @@ impl Pad {
                     let mut paths = vec![];
                     for next_path in self.shortest_paths_from_to(prev_char, char) {
                         let mut path = path.clone();
-                        path.push('A');
                         path.extend(next_path);
+                        path.push('A');
                         paths.push(path);
                     }
                     paths
