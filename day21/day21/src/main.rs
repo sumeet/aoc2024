@@ -3,49 +3,100 @@
 use std::collections::BTreeMap;
 use std::iter::{once, repeat_n};
 
-fn solve(pad: &Pad, code: &[char]) -> Vec<char> {
-    let paths = pad.all_paths(code);
+#[derive(Debug)]
+struct SolveResult {
+    path: Vec<char>,
+    parent_result: Option<Box<SolveResult>>,
+}
 
-    let mut winner = None;
-    for path in paths {
-        let parent_path = if let Some(parent) = &pad.parent {
-            &solve(&parent, &path)
+impl SolveResult {
+    fn len_of_last_parent(&self) -> usize {
+        if let Some(parent) = &self.parent_result {
+            parent.len_of_last_parent()
         } else {
-            &path
-        };
-        if winner
-            .as_ref()
-            .map(|w: &Vec<_>| w.len())
-            .unwrap_or(usize::MAX)
-            > parent_path.len()
-        {
-            winner = Some(parent_path);
+            self.path.len()
         }
-
-        println!(
-            "parent path: {parent_path}",
-            parent_path = parent_path.iter().collect::<String>()
-        );
     }
 
+    fn path_of_last_parent(&self) -> &[char] {
+        if let Some(parent) = &self.parent_result {
+            parent.path_of_last_parent()
+        } else {
+            &self.path
+        }
+    }
+}
+
+fn solve(pad: &Pad, code: &[char]) -> SolveResult {
+    let paths = pad.all_paths(code);
+    let mut winner = None;
+    for path in paths {
+        if let Some(parent) = &pad.parent {
+            let parent_result = solve(parent, &path);
+            if parent_result.len_of_last_parent()
+                < winner
+                    .as_ref()
+                    .map(|w: &SolveResult| w.len_of_last_parent())
+                    .unwrap_or(usize::MAX)
+            {
+                winner = Some(SolveResult {
+                    path,
+                    parent_result: Some(Box::new(parent_result)),
+                });
+            }
+        } else {
+            if path.len()
+                < winner
+                    .as_ref()
+                    .map(|w: &SolveResult| w.len_of_last_parent())
+                    .unwrap_or(usize::MAX)
+            {
+                winner = Some(SolveResult {
+                    path,
+                    parent_result: None,
+                });
+            }
+        }
+
+        // let parent_result = pad.parent.as_ref().map(|parent| solve(&parent, &path));
+        // if winner
+        //     .as_ref()
+        //     .map(|w: &Vec<_>| w.len())
+        //     .unwrap_or(usize::MAX)
+        //     > parent_result.map(|r| r.len_of_last_parent()).unwrap_or(usize::MAX)
+        // {
+        //     winner = Some((parent_path.clone(), path));
+        // }
+    }
+
+    // println!("winner: {}", winner.iter().flatten().collect::<String>());
     winner.unwrap()
 }
 
 fn main() {
     let mut total = 0;
     for code in SAMPLE.split("\n") {
-        let mut num_pad = Pad::init_num_pad();
+        let num_pad = Pad::init_num_pad();
         // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
         // let path = num_pad.last_path();
-        let path = solve(&num_pad, &code.chars().collect::<Vec<_>>());
+        let result = solve(&num_pad, &code.chars().collect::<Vec<_>>());
+        let path = result.path_of_last_parent();
         let num_part_of_code = code[0..3].parse::<usize>().unwrap();
         total += num_part_of_code * path.len();
         println!(
-            "{num_part_of_code} * {path_len} => {path}",
+            "{path_len} * {num_part_of_code} => {path}",
             path_len = path.len(),
             path = path.iter().collect::<String>()
         );
-        num_pad.print(0);
+
+        let mut result = &result;
+        println!("0: {}", result.path.iter().collect::<String>());
+        let mut i = 0;
+        while let Some(next) = &result.parent_result {
+            i += 1;
+            println!("{i}: {}", next.path.iter().collect::<String>());
+            result = next;
+        }
     }
     println!("part 1: {total}");
 }
