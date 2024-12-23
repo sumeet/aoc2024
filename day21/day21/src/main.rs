@@ -133,18 +133,6 @@ impl Grid {
     }
 }
 
-// static DIR_BY_CHAR: LazyLock<BTreeMap<char, (i8, i8)>> = LazyLock::new(|| {
-//     let mut dirs = BTreeMap::new();
-//     dirs.insert('^', (-1, 0));
-//     dirs.insert('v', (1, 0));
-//     dirs.insert('<', (0, -1));
-//     dirs.insert('>', (0, 1));
-//     dirs
-// });
-//
-// static CHAR_BY_DIR: LazyLock<BTreeMap<(i8, i8), char>> =
-//     LazyLock::new(|| DIR_BY_CHAR.iter().map(|(c, d)| (*d, *c)).collect());
-
 #[derive(Clone, Debug)]
 struct Pad {
     grid: Grid,
