@@ -3,12 +3,41 @@
 use std::collections::BTreeMap;
 use std::iter::{once, repeat_n};
 
+fn solve(pad: &Pad, code: &[char]) -> Vec<char> {
+    let paths = pad.all_paths(code);
+
+    let mut winner = None;
+    for path in paths {
+        let parent_path = if let Some(parent) = &pad.parent {
+            &solve(&parent, &path)
+        } else {
+            &path
+        };
+        if winner
+            .as_ref()
+            .map(|w: &Vec<_>| w.len())
+            .unwrap_or(usize::MAX)
+            > parent_path.len()
+        {
+            winner = Some(parent_path);
+        }
+
+        println!(
+            "parent path: {parent_path}",
+            parent_path = parent_path.iter().collect::<String>()
+        );
+    }
+
+    winner.unwrap()
+}
+
 fn main() {
     let mut total = 0;
     for code in SAMPLE.split("\n") {
         let mut num_pad = Pad::init_num_pad();
-        num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
-        let path = num_pad.last_path();
+        // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
+        // let path = num_pad.last_path();
+        let path = solve(&num_pad, &code.chars().collect::<Vec<_>>());
         let num_part_of_code = code[0..3].parse::<usize>().unwrap();
         total += num_part_of_code * path.len();
         println!(
@@ -163,6 +192,8 @@ impl Pad {
         let mut total = 0;
         let mut from = self.current;
         for to in path {
+            // TODO: might have to consider this in path mode instead of char-by-char
+
             total += self
                 .shortest_paths_from_to(from, *to)
                 .into_iter()
