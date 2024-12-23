@@ -105,6 +105,7 @@ impl Pad {
 
     fn go_to_path_via_shortest_path(&mut self, path: &[char]) {
         let paths = self.all_paths(path);
+        println!("all paths to {path:?}: {:?}", paths);
         let path_to_follow = match (paths.len(), &self.parent) {
             (0, _) => unreachable!(),
             (1, _) => paths.first().unwrap(),
@@ -119,9 +120,9 @@ impl Pad {
         self.moves_so_far.extend(path_to_follow.clone());
 
         // TODO: gotta recomment this in to get parents working
-        // if let Some(parent) = &mut self.parent {
-        //     parent.go_to_path_via_shortest_path(&path_to_follow.collect::<Vec<_>>());
-        // }
+        if let Some(parent) = &mut self.parent {
+            parent.go_to_path_via_shortest_path(&path_to_follow.collect::<Vec<_>>());
+        }
     }
 
     // fn go_to_char_via_shortest_path(&mut self, c: char) {
@@ -185,16 +186,10 @@ impl Pad {
         //}
 
         for &char in to.iter().skip(1) {
-            println!(
-                "all_paths_to_char for {char:?}: {:?}",
-                all_paths_to_char.len()
-            );
-
             all_paths_to_char = all_paths_to_char
                 .iter()
                 .flat_map(move |path| {
                     let mut paths = vec![];
-                    println!("getting path from {} to {}", prev_char, char);
                     for next_path in self.shortest_paths_from_to(prev_char, char) {
                         let mut path = path.clone();
                         path.push('A');
