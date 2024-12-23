@@ -2,19 +2,20 @@
 
 use std::collections::BTreeMap;
 use std::iter::{once, repeat_n};
-use std::sync::LazyLock;
 
 fn main() {
     let mut total = 0;
     for code in SAMPLE.split("\n") {
         let mut num_pad = Pad::init_num_pad();
-        for char in code.chars() {
-            num_pad.go_to_char_via_shortest_path(char);
-        }
+        num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
         let path = num_pad.last_path();
         let num_part_of_code = code[0..3].parse::<usize>().unwrap();
         total += num_part_of_code * path.len();
-        println!("{num_part_of_code} * {path_len} => {path}", path_len = path.len(), path = path.iter().collect::<String>());
+        println!(
+            "{num_part_of_code} * {path_len} => {path}",
+            path_len = path.len(),
+            path = path.iter().collect::<String>()
+        );
         num_pad.print(0);
     }
     println!("part 1: {total}");
@@ -102,30 +103,51 @@ impl Pad {
         }
     }
 
-    fn go_to_char_via_shortest_path(&mut self, c: char) {
-        let paths = self.shortest_paths_to(c);
+    fn go_to_path_via_shortest_path(&mut self, path: &[char]) {
+        let paths = self.all_paths(path);
         let path_to_follow = match (paths.len(), &self.parent) {
             (0, _) => unreachable!(),
             (1, _) => paths.first().unwrap(),
             (_, Some(parent)) => paths
                 .iter()
-                // .min_by_key(|p| parent.distance_to_char(*p.iter().next().unwrap()))
                 .min_by_key(|p| parent.distance_to_path(p))
                 .unwrap(),
-            // it doesn't matter, just pick one
+            // there's no parent, so it doesn't matter, just pick one
             (_, None) => paths.iter().next().unwrap(),
         };
         let path_to_follow = path_to_follow.iter().copied().chain(once('A'));
-
         self.moves_so_far.extend(path_to_follow.clone());
-        self.current = c;
 
-        if let Some(parent) = &mut self.parent {
-            for parent_c in path_to_follow {
-                parent.go_to_char_via_shortest_path(parent_c);
-            }
-        }
+        // TODO: gotta recomment this in to get parents working
+        // if let Some(parent) = &mut self.parent {
+        //     parent.go_to_path_via_shortest_path(&path_to_follow.collect::<Vec<_>>());
+        // }
     }
+
+    // fn go_to_char_via_shortest_path(&mut self, c: char) {
+    //     let paths = self.shortest_paths_to(c);
+    //     let path_to_follow = match (paths.len(), &self.parent) {
+    //         (0, _) => unreachable!(),
+    //         (1, _) => paths.first().unwrap(),
+    //         (_, Some(parent)) => paths
+    //             .iter()
+    //             // .min_by_key(|p| parent.distance_to_char(*p.iter().next().unwrap()))
+    //             .min_by_key(|p| parent.distance_to_path(p))
+    //             .unwrap(),
+    //         // it doesn't matter, just pick one
+    //         (_, None) => paths.iter().next().unwrap(),
+    //     };
+    //     let path_to_follow = path_to_follow.iter().copied().chain(once('A'));
+    //
+    //     self.moves_so_far.extend(path_to_follow.clone());
+    //     self.current = c;
+    //
+    //     if let Some(parent) = &mut self.parent {
+    //         for parent_c in path_to_follow {
+    //             parent.go_to_char_via_shortest_path(parent_c);
+    //         }
+    //     }
+    // }
 
     // fn distance_to_char(&self, c: char) -> usize {
     //     // TODO: if this is slow, this could be optimized to just choose the first one
@@ -141,7 +163,8 @@ impl Pad {
         let mut total = 0;
         let mut from = self.current;
         for to in path {
-            total += self.shortest_paths_from_to(from, *to)
+            total += self
+                .shortest_paths_from_to(from, *to)
                 .into_iter()
                 .min_by_key(|p| p.len())
                 .unwrap()
@@ -149,6 +172,42 @@ impl Pad {
             from = *to;
         }
         total
+    }
+
+    fn all_paths(&self, to: &[char]) -> Vec<Vec<char>> {
+        if to.len() == 0 {
+            return vec![];
+        }
+        let mut prev_char = *to.first().unwrap();
+        let mut all_paths_to_char = self.shortest_paths_to(prev_char);
+        //for path in all_paths_to_char.iter_mut() {
+        //    path.push('A');
+        //}
+
+        for &char in to.iter().skip(1) {
+            println!(
+                "all_paths_to_char for {char:?}: {:?}",
+                all_paths_to_char.len()
+            );
+
+            all_paths_to_char = all_paths_to_char
+                .iter()
+                .flat_map(move |path| {
+                    let mut paths = vec![];
+                    println!("getting path from {} to {}", prev_char, char);
+                    for next_path in self.shortest_paths_from_to(prev_char, char) {
+                        let mut path = path.clone();
+                        path.push('A');
+                        path.extend(next_path);
+                        paths.push(path);
+                    }
+                    paths
+                })
+                .collect();
+
+            prev_char = char;
+        }
+        all_paths_to_char
     }
 
     fn new(pos_by_char: BTreeMap<char, (i8, i8)>) -> Self {
@@ -165,29 +224,29 @@ impl Pad {
                 let dy = *to_y - *from_y;
                 let dx = *to_x - *from_x;
 
-                if (dy != 0) {
+                if dy != 0 {
                     let mut path = vec![];
                     let mut cur = (*from_y, *from_x);
                     let mut dy = dy;
                     let mut dx = dx;
-                    while (dy != 0 || dx != 0) {
+                    while dy != 0 || dx != 0 {
                         dy = Self::move_in_y_direction(&grid, dy, &mut path, &mut cur);
                         dx = Self::move_in_x_direction(&grid, dx, &mut path, &mut cur);
                     }
-                    if (path.len() > 0) {
+                    if path.len() > 0 {
                         paths.push(path);
                     }
                 }
-                if (dx != 0) {
+                if dx != 0 {
                     let mut path = vec![];
                     let mut cur = (*from_y, *from_x);
                     let mut dy = dy;
                     let mut dx = dx;
-                    while (dy != 0 || dx != 0) {
+                    while dy != 0 || dx != 0 {
                         dx = Self::move_in_x_direction(&grid, dx, &mut path, &mut cur);
                         dy = Self::move_in_y_direction(&grid, dy, &mut path, &mut cur);
                     }
-                    if (path.len() > 0) {
+                    if path.len() > 0 {
                         paths.push(path);
                     }
                 }
@@ -218,10 +277,7 @@ impl Pad {
     }
 
     fn shortest_paths_from_to(&self, from: char, to: char) -> Vec<Vec<char>> {
-        self.all_shortest_paths
-            .get(&(from, to))
-            .unwrap()
-            .clone()
+        self.all_shortest_paths.get(&(from, to)).unwrap().clone()
     }
 
     //     +---+---+
