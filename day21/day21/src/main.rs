@@ -105,7 +105,6 @@ impl Pad {
 
     fn go_to_path_via_shortest_path(&mut self, path: &[char]) {
         let paths = self.all_paths(path);
-        println!("all paths to {path:?}: {:?}", paths);
         let path_to_follow = match (paths.len(), &self.parent) {
             (0, _) => unreachable!(),
             (1, _) => paths.first().unwrap(),
