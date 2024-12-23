@@ -76,12 +76,14 @@ fn solve_part_1(pad: &Pad, code: &[char], prefix: char) -> SolveResult {
 
 // part 2
 fn main() {
-    return part1();
+    // return part1();
     let num_pad = Pad::init_num_pad(2);
     let all_chars = "A0123456789";
     let mut shortest_paths = BTreeMap::new();
     for a in all_chars.chars() {
+        println!("working for {a}", a = a);
         for b in all_chars.chars() {
+            println!("working for {b}");
             let result = solve_part_1(&num_pad, &[b], a);
             let path = result.path_of_last_parent();
             shortest_paths.insert((a, b), path.to_vec());
@@ -92,12 +94,12 @@ fn main() {
         let mut path: Vec<char> = vec![];
         for (a, b) in once('A').chain(code.chars()).zip(code.chars()) {
             let this_path = shortest_paths.get(&(a, b)).unwrap();
-            println!(
-                "{a} -> {b}: {this_path}",
-                a = a,
-                b = b,
-                this_path = this_path.iter().collect::<String>()
-            );
+            // println!(
+            //     "{a} -> {b}: {this_path}",
+            //     a = a,
+            //     b = b,
+            //     this_path = this_path.iter().collect::<String>()
+            // );
             path.extend(this_path);
         }
         println!("{}", path.len());
