@@ -27,13 +27,13 @@ impl SolveResult {
     }
 }
 
-fn solve_part_1(pad: &Pad, code: &[char]) -> SolveResult {
-    let sequence = once('A').chain(code.iter().copied()).collect::<Vec<_>>();
+fn solve_part_1(pad: &Pad, code: &[char], prefix: char) -> SolveResult {
+    let sequence = once(prefix).chain(code.iter().copied()).collect::<Vec<_>>();
     let paths = pad.all_paths(&sequence);
     let mut winner = None;
     for path in paths {
         if let Some(parent) = &pad.parent {
-            let parent_result = solve_part_1(parent, &path);
+            let parent_result = solve_part_1(parent, &path, 'A');
             if parent_result.len_of_last_parent()
                 < winner
                     .as_ref()
@@ -82,7 +82,7 @@ fn main() {
     let mut shortest_paths = BTreeMap::new();
     for a in all_chars.chars() {
         for b in all_chars.chars() {
-            let result = solve_part_1(&num_pad, &[a, b]);
+            let result = solve_part_1(&num_pad, &[b], a);
             let path = result.path_of_last_parent();
             shortest_paths.insert((a, b), path.to_vec());
         }
@@ -110,7 +110,7 @@ fn part1() {
         let num_pad = Pad::init_num_pad(2);
         // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
         // let path = num_pad.last_path();
-        let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>());
+        let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>(), 'A');
         let path = result.path_of_last_parent();
         let num_part_of_code = code[0..3].parse::<usize>().unwrap();
         total += num_part_of_code * path.len();
