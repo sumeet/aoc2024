@@ -84,33 +84,8 @@ fn main() {
     let mut shortest_paths_depth_3: BTreeMap<[Option<char>; 5], Vec<char>> = BTreeMap::new();
     for a in all_dir_chars.chars() {
         for b in all_dir_chars.chars() {
-            for (pad, shortest_paths) in [
-                (&pad_depth_2, &mut shortest_paths_depth_2),
-                (&pad_depth_3, &mut shortest_paths_depth_3),
-            ] {
-                let result = solve_part_1(pad, &[b], a);
-                let path = result.path_of_last_parent();
-                shortest_paths.insert([Some(a), Some(b), None, None, None], path.to_vec());
-            }
             for c in all_dir_chars.chars() {
-                for (pad, shortest_paths) in [
-                    (&pad_depth_2, &mut shortest_paths_depth_2),
-                    (&pad_depth_3, &mut shortest_paths_depth_3),
-                ] {
-                    let result = solve_part_1(pad, &[b, c], a);
-                    let path = result.path_of_last_parent();
-                    shortest_paths.insert([Some(a), Some(b), Some(c), None, None], path.to_vec());
-                }
                 for d in all_dir_chars.chars() {
-                    for (pad, shortest_paths) in [
-                        (&pad_depth_2, &mut shortest_paths_depth_2),
-                        (&pad_depth_3, &mut shortest_paths_depth_3),
-                    ] {
-                        let result = solve_part_1(pad, &[b, c, d], a);
-                        let path = result.path_of_last_parent();
-                        shortest_paths
-                            .insert([Some(a), Some(b), Some(c), Some(d), None], path.to_vec());
-                    }
                     for e in all_dir_chars.chars() {
                         for (pad, shortest_paths) in [
                             (&pad_depth_2, &mut shortest_paths_depth_2),
@@ -193,33 +168,33 @@ fn main() {
     println!("part 2: {total}");
 }
 
-fn part1() {
-    let mut total = 0;
-    for code in INPUT.split("\n") {
-        let num_pad = Pad::full_init(2);
-        // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
-        // let path = num_pad.last_path();
-        let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>(), 'A');
-        let path = result.path_of_last_parent();
-        let num_part_of_code = code[0..3].parse::<usize>().unwrap();
-        total += num_part_of_code * path.len();
-        // println!(
-        //     "{path_len} * {num_part_of_code} => {path}",
-        //     path_len = path.len(),
-        //     path = path.iter().collect::<String>()
-        // );
-
-        // let mut result = &result;
-        // println!("0: {}", result.path.iter().collect::<String>());
-        // let mut i = 0;
-        // while let Some(next) = &result.parent_result {
-        //     i += 1;
-        //     println!("{i}: {}", next.path.iter().collect::<String>());
-        //     result = next;
-        // }
-    }
-    println!("part 1: {total}");
-}
+// fn part1() {
+//     let mut total = 0;
+//     for code in INPUT.split("\n") {
+//         let num_pad = Pad::full_init(2);
+//         // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
+//         // let path = num_pad.last_path();
+//         let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>(), 'A');
+//         let path = result.path_of_last_parent();
+//         let num_part_of_code = code[0..3].parse::<usize>().unwrap();
+//         total += num_part_of_code * path.len();
+//         // println!(
+//         //     "{path_len} * {num_part_of_code} => {path}",
+//         //     path_len = path.len(),
+//         //     path = path.iter().collect::<String>()
+//         // );
+//
+//         // let mut result = &result;
+//         // println!("0: {}", result.path.iter().collect::<String>());
+//         // let mut i = 0;
+//         // while let Some(next) = &result.parent_result {
+//         //     i += 1;
+//         //     println!("{i}: {}", next.path.iter().collect::<String>());
+//         //     result = next;
+//         // }
+//     }
+//     println!("part 1: {total}");
+// }
 
 #[derive(Clone, Debug)]
 struct Grid {
