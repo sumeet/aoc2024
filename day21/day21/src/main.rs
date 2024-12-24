@@ -1,5 +1,6 @@
 #![feature(slice_partition_dedup)]
 
+use itertools::Itertools;
 use std::collections::BTreeMap;
 use std::iter::{once, repeat_n};
 
@@ -76,20 +77,102 @@ fn solve_part_1(pad: &Pad, code: &[char], prefix: char) -> SolveResult {
 
 // part 2
 fn main() {
+    let pad_depth_2 = Pad::nested_dir_pads_only(2);
+    let pad_depth_3 = Pad::nested_dir_pads_only(3);
+    let all_dir_chars = "A<>^v";
+    let mut shortest_paths_depth_2: BTreeMap<[Option<char>; 5], Vec<char>> = BTreeMap::new();
+    let mut shortest_paths_depth_3: BTreeMap<[Option<char>; 5], Vec<char>> = BTreeMap::new();
+    for a in all_dir_chars.chars() {
+        for b in all_dir_chars.chars() {
+            for (pad, shortest_paths) in [
+                (&pad_depth_2, &mut shortest_paths_depth_2),
+                (&pad_depth_3, &mut shortest_paths_depth_3),
+            ] {
+                let result = solve_part_1(pad, &[b], a);
+                let path = result.path_of_last_parent();
+                shortest_paths.insert([Some(a), Some(b), None, None, None], path.to_vec());
+            }
+            for c in all_dir_chars.chars() {
+                for (pad, shortest_paths) in [
+                    (&pad_depth_2, &mut shortest_paths_depth_2),
+                    (&pad_depth_3, &mut shortest_paths_depth_3),
+                ] {
+                    let result = solve_part_1(pad, &[b, c], a);
+                    let path = result.path_of_last_parent();
+                    shortest_paths.insert([Some(a), Some(b), Some(c), None, None], path.to_vec());
+                }
+                for d in all_dir_chars.chars() {
+                    for (pad, shortest_paths) in [
+                        (&pad_depth_2, &mut shortest_paths_depth_2),
+                        (&pad_depth_3, &mut shortest_paths_depth_3),
+                    ] {
+                        let result = solve_part_1(pad, &[b, c, d], a);
+                        let path = result.path_of_last_parent();
+                        shortest_paths
+                            .insert([Some(a), Some(b), Some(c), Some(d), None], path.to_vec());
+                    }
+                    for e in all_dir_chars.chars() {
+                        for (pad, shortest_paths) in [
+                            (&pad_depth_2, &mut shortest_paths_depth_2),
+                            (&pad_depth_3, &mut shortest_paths_depth_3),
+                        ] {
+                            let result = solve_part_1(pad, &[b, c, d, e], a);
+                            let path = result.path_of_last_parent();
+                            shortest_paths.insert(
+                                [Some(a), Some(b), Some(c), Some(d), Some(e)],
+                                path.to_vec(),
+                            );
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    let num_pad = Pad::num();
+
+    for code in SAMPLE.split("\n") {
+        let all_paths = num_pad.all_paths(&once('A').chain(code.chars()).collect::<Vec<_>>());
+        let shortest_path = all_paths
+            .iter()
+            .map(|path| {
+                let mut final_path = vec![];
+                for chars in &once('A').chain(path.iter().copied()).chunks(5) {
+                    let mut lookup: [Option<char>; 5] = [None; 5];
+                    for (i, c) in chars.enumerate() {
+                        lookup[i] = Some(c);
+                    }
+                    let path = shortest_paths_depth_2.get(&lookup).unwrap();
+                    final_path.extend(path);
+                    final_path.push('A');
+                }
+                final_path
+            })
+            .min_by_key(|p| p.len())
+            .unwrap();
+        println!(
+            "{}: {} ({})",
+            code,
+            shortest_path.iter().collect::<String>(),
+            shortest_path.len()
+        );
+    }
+
+    return;
+
     // return part1();
-    let num_pad = Pad::init_num_pad(2);
+    let num_pad = Pad::full_init(2);
     let all_chars = "A0123456789";
     let mut shortest_paths = BTreeMap::new();
     for a in all_chars.chars() {
-        println!("working for {a}", a = a);
         for b in all_chars.chars() {
-            println!("working for {b}");
             let result = solve_part_1(&num_pad, &[b], a);
             let path = result.path_of_last_parent();
             shortest_paths.insert((a, b), path.to_vec());
         }
     }
 
+    let mut total = 0;
     for code in SAMPLE.split("\n") {
         let mut path: Vec<char> = vec![];
         for (a, b) in once('A').chain(code.chars()).zip(code.chars()) {
@@ -102,14 +185,18 @@ fn main() {
             // );
             path.extend(this_path);
         }
-        println!("{}", path.len());
+        let num_part_of_code = code[0..3].parse::<usize>().unwrap();
+        let product = num_part_of_code * path.len();
+        println!("{} * {num_part_of_code} = {product}", path.len());
+        total += product;
     }
+    println!("part 2: {total}");
 }
 
 fn part1() {
     let mut total = 0;
     for code in INPUT.split("\n") {
-        let num_pad = Pad::init_num_pad(2);
+        let num_pad = Pad::full_init(2);
         // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
         // let path = num_pad.last_path();
         let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>(), 'A');
@@ -176,9 +263,19 @@ struct Pad {
 }
 
 impl Pad {
-    fn init_num_pad(num_robots: usize) -> Self {
-        let mut pads = once(Pad::num())
-            .chain(repeat_n(Pad::dir(), num_robots))
+    fn nested_dir_pads_only(n: usize) -> Self {
+        let mut pads = repeat_n(Self::dir(), n).collect::<Vec<_>>();
+        let mut prev_pad = pads.pop().unwrap();
+        while let Some(mut pad) = pads.pop() {
+            pad.parent = Some(Box::new(prev_pad));
+            prev_pad = pad;
+        }
+        prev_pad
+    }
+
+    fn full_init(num_robots: usize) -> Self {
+        let mut pads = once(Self::num())
+            .chain(repeat_n(Self::dir(), num_robots))
             .collect::<Vec<_>>();
         let mut prev_pad = pads.pop().unwrap();
         while let Some(mut pad) = pads.pop() {
@@ -306,6 +403,10 @@ impl Pad {
 
             prev_char = char;
         }
+
+        // all_paths_to_char.sort_by_key(|p| p.len());
+        // let min_length = all_paths_to_char[0].len();
+        // all_paths_to_char.retain(|p| p.len() == min_length);
         all_paths_to_char
     }
 
