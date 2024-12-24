@@ -28,6 +28,13 @@ impl SolveResult {
     }
 }
 
+fn solve_part_2(pad: &Pad, code: &[char], prefix: char) -> Vec<char> {
+    let sequence = once(prefix).chain(code.iter().copied()).collect::<Vec<_>>();
+    // let paths = pad.all_paths(&sequence);
+    // let path = pad.one_path(&sequence);
+    return pad.one_path(&sequence);
+}
+
 fn solve_part_1(pad: &Pad, code: &[char], prefix: char) -> SolveResult {
     let sequence = once(prefix).chain(code.iter().copied()).collect::<Vec<_>>();
     let paths = pad.all_paths(&sequence);
@@ -77,7 +84,7 @@ fn solve_part_1(pad: &Pad, code: &[char], prefix: char) -> SolveResult {
 
 // part 2
 fn main() {
-    // return part1();
+    return part1();
     // return part2();
 
     let pad_depth_2 = Pad::nested_dir_pads_only(2);
@@ -172,13 +179,47 @@ fn main() {
 }
 
 fn part1() {
+    let mut num_pad_building = Pad::num();
+    let mut dir_pad_building = Pad::dir();
+
+    let nested_dir_pads = Pad::nested_dir_pads_only(2);
+
+    shrink(&mut num_pad_building, &nested_dir_pads);
+    shrink(&mut dir_pad_building, &nested_dir_pads);
+
+    // let mut num_pad = Pad::full_init(2);
+    // num_pad.all_shortest_paths = num_pad_building.all_shortest_paths;
+    // let num_pad = num_pad;
+    let num_pad = num_pad_building;
+    let dir_pad = dir_pad_building;
+
+    let all_chars = "A0123456789";
+    for a in all_chars.chars() {
+        for b in all_chars.chars() {
+            println!("working on {a} -> {b}");
+            for _ in 0..25 {
+                let mut path = solve_part_2(&num_pad, &[b], a);
+                for i in 0..25 {
+                    println!("on iteration {i}: len {len}", i = i, len = path.len());
+                    path = solve_part_2(&dir_pad, &path, 'A');
+                }
+            }
+        }
+    }
+
+    return;
+
     let mut total = 0;
-    for code in INPUT.split("\n") {
-        let num_pad = Pad::full_init(2);
+    for code in SAMPLE.split("\n") {
+        let mut path = solve_part_2(&num_pad, &code.chars().collect::<Vec<_>>(), 'A');
+        for i in 0..25 {
+            println!("on iteration {i}: len {len}", i = i, len = path.len());
+            path = solve_part_2(&dir_pad, &path, 'A');
+        }
         // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
         // let path = num_pad.last_path();
-        let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>(), 'A');
-        let path = result.path_of_last_parent();
+        // let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>(), 'A');
+        // let path = result.path_of_last_parent();
         let num_part_of_code = code[0..3].parse::<usize>().unwrap();
         total += num_part_of_code * path.len();
         println!(
@@ -187,58 +228,31 @@ fn part1() {
             path = path.iter().collect::<String>()
         );
 
-        let mut result = &result;
-        println!("0: {}", result.path.iter().collect::<String>());
-        let mut i = 0;
-        while let Some(next) = &result.parent_result {
-            i += 1;
-            println!("{i}: {}", next.path.iter().collect::<String>());
-            result = next;
-        }
+        // let mut result = &result;
+        // println!("0: {}", result.path.iter().collect::<String>());
+        // let mut i = 0;
+        // while let Some(next) = &result.parent_result {
+        //     i += 1;
+        //     println!("{i}: {}", next.path.iter().collect::<String>());
+        //     result = next;
+        // }
     }
     println!("part 1: {total}");
 }
 
-fn part2() {
-    let mut total = 0;
-    for code in INPUT.split("\n") {
-        let num_pad = Pad::full_init(2);
-        // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
-        // let path = num_pad.last_path();
-        let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>(), 'A');
-        let mut path = result.path_of_last_parent().to_vec();
-        let mut remaining = 23;
-        let pad_for_while_loop = Pad::dir();
-        while remaining > 0 {
-            println!("in remaining loop");
-            let result = solve_part_1(&pad_for_while_loop, &path, 'A');
-            path = result.path_of_last_parent().to_vec();
-            remaining -= 1;
-        }
-
-        let last_pad = Pad::dir();
-        let path = solve_part_1(&last_pad, &path, 'A')
-            .path_of_last_parent()
-            .to_vec();
-
-        let num_part_of_code = code[0..3].parse::<usize>().unwrap();
-        total += num_part_of_code * path.len();
-        println!(
-            "{path_len} * {num_part_of_code} => {path}",
-            path_len = path.len(),
-            path = path.iter().collect::<String>()
-        );
-
-        let mut result = &result;
-        println!("0: {}", result.path.iter().collect::<String>());
-        let mut i = 0;
-        while let Some(next) = &result.parent_result {
-            i += 1;
-            println!("{i}: {}", next.path.iter().collect::<String>());
-            result = next;
-        }
+fn shrink(pad_to_shrink: &mut Pad, lookup_pad: &Pad) {
+    for paths in pad_to_shrink.all_shortest_paths.values_mut() {
+        *paths = vec![paths
+            .iter()
+            .min_by_key(|path| {
+                if path.len() <= 1 {
+                    return path.len();
+                }
+                solve_part_1(&lookup_pad, &path[1..], path[0]).len_of_last_parent()
+            })
+            .unwrap()
+            .clone()];
     }
-    println!("part 1: {total}");
 }
 
 #[derive(Clone, Debug)]
@@ -392,6 +406,32 @@ impl Pad {
             from = *to;
         }
         total
+    }
+
+    fn one_path(&self, to: &[char]) -> Vec<char> {
+        if to.len() == 0 {
+            return vec![];
+        }
+
+        let first_char = to[0];
+        let mut prev_char = to[1];
+        let mut all_paths_to_char = self.shortest_paths_from_to(first_char, prev_char);
+        if all_paths_to_char.len() > 1 {
+            panic!("unexpected");
+        }
+        let mut path = all_paths_to_char.pop().unwrap();
+        path.push('A');
+
+        for &char in to.iter().skip(2) {
+            let next_path = self.shortest_paths_from_to(prev_char, char);
+            if next_path.len() > 1 {
+                panic!("unexpected");
+            }
+            path.extend(&next_path[0]);
+            path.push('A');
+            prev_char = char;
+        }
+        path
     }
 
     fn all_paths(&self, to: &[char]) -> Vec<Vec<char>> {
