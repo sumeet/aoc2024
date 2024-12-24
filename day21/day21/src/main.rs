@@ -77,6 +77,8 @@ fn solve_part_1(pad: &Pad, code: &[char], prefix: char) -> SolveResult {
 
 // part 2
 fn main() {
+    return part1();
+
     let pad_depth_2 = Pad::nested_dir_pads_only(2);
     let pad_depth_3 = Pad::nested_dir_pads_only(3);
     let all_dir_chars = "A<>^v";
@@ -168,33 +170,33 @@ fn main() {
     println!("part 2: {total}");
 }
 
-// fn part1() {
-//     let mut total = 0;
-//     for code in INPUT.split("\n") {
-//         let num_pad = Pad::full_init(2);
-//         // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
-//         // let path = num_pad.last_path();
-//         let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>(), 'A');
-//         let path = result.path_of_last_parent();
-//         let num_part_of_code = code[0..3].parse::<usize>().unwrap();
-//         total += num_part_of_code * path.len();
-//         // println!(
-//         //     "{path_len} * {num_part_of_code} => {path}",
-//         //     path_len = path.len(),
-//         //     path = path.iter().collect::<String>()
-//         // );
-//
-//         // let mut result = &result;
-//         // println!("0: {}", result.path.iter().collect::<String>());
-//         // let mut i = 0;
-//         // while let Some(next) = &result.parent_result {
-//         //     i += 1;
-//         //     println!("{i}: {}", next.path.iter().collect::<String>());
-//         //     result = next;
-//         // }
-//     }
-//     println!("part 1: {total}");
-// }
+fn part1() {
+    let mut total = 0;
+    for code in INPUT.split("\n") {
+        let num_pad = Pad::full_init(2);
+        // num_pad.go_to_path_via_shortest_path(&code.chars().collect::<Vec<_>>());
+        // let path = num_pad.last_path();
+        let result = solve_part_1(&num_pad, &code.chars().collect::<Vec<_>>(), 'A');
+        let path = result.path_of_last_parent();
+        let num_part_of_code = code[0..3].parse::<usize>().unwrap();
+        total += num_part_of_code * path.len();
+        println!(
+            "{path_len} * {num_part_of_code} => {path}",
+            path_len = path.len(),
+            path = path.iter().collect::<String>()
+        );
+
+        let mut result = &result;
+        println!("0: {}", result.path.iter().collect::<String>());
+        let mut i = 0;
+        while let Some(next) = &result.parent_result {
+            i += 1;
+            println!("{i}: {}", next.path.iter().collect::<String>());
+            result = next;
+        }
+    }
+    println!("part 1: {total}");
+}
 
 #[derive(Clone, Debug)]
 struct Grid {
@@ -378,10 +380,6 @@ impl Pad {
 
             prev_char = char;
         }
-
-        // all_paths_to_char.sort_by_key(|p| p.len());
-        // let min_length = all_paths_to_char[0].len();
-        // all_paths_to_char.retain(|p| p.len() == min_length);
         all_paths_to_char
     }
 
