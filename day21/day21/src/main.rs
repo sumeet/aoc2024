@@ -33,10 +33,11 @@ fn solve_part_2<'a>(
     code: impl Iterator<Item = char> + 'a,
     prefix: char,
 ) -> impl Iterator<Item = char> + 'a {
-    let sequence = once(prefix).chain(code);
+    return [].into_iter();
+    let sequence = once(prefix).chain(code).tuple_windows::<(char, char)>();
     // let paths = pad.all_paths(&sequence);
     // let path = pad.one_path(&sequence);
-    pad.one_path(sequence)
+    // pad.one_path(sequence)
 }
 
 fn solve_part_1(pad: &Pad, code: &[char], prefix: char) -> SolveResult {
@@ -86,9 +87,87 @@ fn solve_part_1(pad: &Pad, code: &[char], prefix: char) -> SolveResult {
     winner.unwrap()
 }
 
+fn part1_try2() {
+    let mut numpad = Pad::num();
+    let shrinker = Pad::nested_dir_pads_only(2);
+    shrink(&mut numpad, &shrinker);
+    let shortest_paths_numpad = numpad
+        .all_shortest_paths
+        .iter()
+        .map(|((a, b), paths)| {
+            assert_eq!(paths.len(), 1);
+            let mut acc = BTreeMap::new();
+            let path = paths.first().unwrap();
+            for (a, b) in once('A')
+                .chain(path.iter().cloned())
+                .chain(once('A'))
+                .tuple_windows()
+            {
+                *acc.entry((a, b)).or_insert(0) += 1;
+            }
+            ((*a, *b), acc)
+        })
+        .collect::<BTreeMap<_, _>>();
+
+    let mut dirpad = Pad::dir();
+    shrink(&mut dirpad, &shrinker);
+    let shortest_paths_dirpad = dirpad
+        .all_shortest_paths
+        .iter()
+        .map(|((a, b), paths)| {
+            assert_eq!(paths.len(), 1);
+            let mut acc = BTreeMap::new();
+            let path = paths.first().unwrap();
+            for (a, b) in once('A')
+                .chain(path.iter().cloned())
+                .chain(once('A'))
+                .tuple_windows()
+            {
+                *acc.entry((a, b)).or_insert(0) += 1;
+            }
+            ((*a, *b), acc)
+        })
+        .collect::<BTreeMap<_, _>>();
+
+    let mut total = 0;
+    for code in INPUT.split("\n") {
+        let dirs = once('A').chain(code.chars());
+        let mut acc = BTreeMap::new();
+        for (a, b) in dirs.tuple_windows() {
+            for (dir, count) in shortest_paths_numpad.get(&(a, b)).unwrap() {
+                *acc.entry(dir).or_insert(0) += count;
+            }
+        }
+
+        // dbg!(acc.values().sum::<usize>());
+        // panic!("{:?}", acc);
+
+        for _ in 0..25 {
+            let mut next_acc = BTreeMap::new();
+            for ((a, b), count) in acc.iter() {
+                let paths = shortest_paths_dirpad.get(&(*a, *b)).unwrap();
+                for (dir, dir_count) in paths {
+                    *next_acc.entry(dir).or_insert(0) += dir_count * count;
+                }
+            }
+            acc = next_acc;
+        }
+
+        let sum = acc.values().sum::<usize>();
+        let num_part_of_code = code[0..3].parse::<usize>().unwrap();
+        println!(
+            "{code}: {sum} * {num_part_of_code} = {}",
+            sum * num_part_of_code
+        );
+        total += sum * num_part_of_code;
+    }
+    println!("part 2: {total}");
+}
+
 // part 2
 fn main() {
-    return part1();
+    return part1_try2();
+    // return part1();
     // return part2();
 
     let pad_depth_2 = Pad::nested_dir_pads_only(2);
@@ -211,10 +290,10 @@ fn part1() {
     // }
 
     let all_dirs = "A<>^v";
-    let mut counts = BTreeMap::new();
+    // let mut counts = BTreeMap::new();
     for a in all_dirs.chars() {
         for b in all_dirs.chars() {
-            solve_part_2(&mut counts, &dir_pad, once(b), a)
+            // solve_part_2(&mut counts, &dir_pad, once(b), a)
 
             // let mut path: Box<dyn Iterator<Item = char>> =
             //     Box::new(solve_part_2(&dir_pad, once(b), a));
