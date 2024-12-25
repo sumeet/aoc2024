@@ -36,7 +36,7 @@ fn solve_part_2<'a>(
     let sequence = once(prefix).chain(code);
     // let paths = pad.all_paths(&sequence);
     // let path = pad.one_path(&sequence);
-    return pad.one_path(sequence);
+    pad.one_path(sequence)
 }
 
 fn solve_part_1(pad: &Pad, code: &[char], prefix: char) -> SolveResult {
@@ -197,16 +197,32 @@ fn part1() {
     let num_pad = num_pad_building;
     let dir_pad = dir_pad_building;
 
-    let all_chars = "A0123456789";
-    for a in all_chars.chars() {
-        for b in all_chars.chars() {
-            let mut path: Box<dyn Iterator<Item = char>> =
-                Box::new(solve_part_2(&num_pad, once(b), a));
-            for i in 0..25 {
-                println!("on iteration {i}", i = i,);
-                path = Box::new(solve_part_2(&dir_pad, path, 'A'));
-            }
-            println!("{a} -> {b}: {count}", count = path.count(),);
+    // let all_chars = "A0123456789";
+    // for a in all_chars.chars() {
+    //     for b in all_chars.chars() {
+    //         let mut path: Box<dyn Iterator<Item = char>> =
+    //             Box::new(solve_part_2(&num_pad, once(b), a));
+    //         for i in 0..25 {
+    //             println!("on iteration {i}", i = i,);
+    //             path = Box::new(solve_part_2(&dir_pad, path, 'A'));
+    //         }
+    //         println!("{a} -> {b}: {count}", count = path.count(),);
+    //     }
+    // }
+
+    let all_dirs = "A<>^v";
+    let mut counts = BTreeMap::new();
+    for a in all_dirs.chars() {
+        for b in all_dirs.chars() {
+            solve_part_2(&mut counts, &dir_pad, once(b), a)
+
+            // let mut path: Box<dyn Iterator<Item = char>> =
+            //     Box::new(solve_part_2(&dir_pad, once(b), a));
+            // for i in 0..7 {
+            //     // println!("on iteration {i}", i = i,);
+            //     path = Box::new(solve_part_2(&dir_pad, path, 'A'));
+            // }
+            // println!("{a} -> {b}: {count}", count = path.count(),);
         }
     }
 
