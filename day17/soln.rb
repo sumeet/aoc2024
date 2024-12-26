@@ -101,11 +101,14 @@ puts run(Program).join(',')
 puts "part 2:"
 
 def try digits
-  n = digits.map { |d| '%03b' % d }.join.to_i(2) 
-  Registers[0] = n
+  Registers[0] = from_digits digits
   Registers[1] = 0
   Registers[2] = 0
   run(Program)
+end
+
+def from_digits ds
+  ds.map { |d| '%03b' % d }.join.to_i(2) 
 end
 
 def score diff
@@ -113,74 +116,54 @@ def score diff
   diff.length
 end
 
+def try_and_score digits
+  diff = Program.each_with_index.to_a - try(digits).each_with_index.to_a
+  score diff
+end
+
 puts "trying to match"
 puts "#{Program}"
 
-digits = 16.times.map { 1 }
+def part2
+  while true
+    prev_score = Float::INFINITY
+    digits = 16.times.map { rand 8 }
 
-(16.times + 16.times.reverse_each).each do |i|
-  digits[i] = (0...7).min_by do |d|
-    ds = digits.dup
-    ds[i] = d
-    diff = Program.each_with_index.to_a - try(ds).each_with_index.to_a
-    score diff
-  end
-end
+    while try_and_score(digits) < prev_score
+      prev_score = try_and_score digits
+      puts "an iteration"
 
-(16.times + 16.times.reverse_each).each do |i|
-  digits[i] = (0...7).min_by do |d|
-    ds = digits.dup
-    ds[i] = d
-    diff = Program.each_with_index.to_a - try(ds).each_with_index.to_a
-    score diff
-  end
-end
-
-(16.times.each_cons(4) + 16.times.each_cons(4).reverse_each).each do |i, j, k, l|
-  min = Float::INFINITY
-  min_d = nil
-  (0...7).each do |d|
-    (0...7).each do |e|
-      (0...7).each do |f|
-        (0...7).each do |g|
+      best_values = 16.times.map do |i|
+        best_scores = (0..7).map do |j|
           ds = digits.dup
-          ds[i] = d
-          ds[j] = e
-          ds[k] = f
-          ds[l] = g
-          diff = Program.each_with_index.to_a - try(ds).each_with_index.to_a
-          diffscore = score diff
-          if min_d.nil? || (diffscore <=> min) < 0
-            min = diffscore
-            min_d = [d, e, f, g]
-          end
+          ds[i] = j
+          try_and_score ds
+        end
+
+        best_score = best_scores.min
+        best_scores.each_with_index.select { |s, j| s == best_score }.map(&:last)
+      end
+
+      min_score = Float::INFINITY
+      best = nil
+      best_values.shift.product(*best_values).each do |ds|
+        score = try_and_score ds
+        if score == 0
+          puts "found: #{ds}"
+          return from_digits ds
+        end
+        if score < min_score
+          min_score = score
+          best = ds
+          puts "new best: #{try ds} => #{score}"
+          puts "original: #{Program}"
         end
       end
+
+      digits = best
     end
   end
-  digits[i], digits[j], digits[k], digits[l] = min_d
 end
 
-#16.times.reverse_each do |i|
-#  16.times.reverse_each do |j|
-#    min = Float::INFINITY
-#    min_d = nil
-#    (0...7).each do |d|
-#      (0...7).each do |e|
-#        ds = digits.dup
-#        ds[i] = d
-#        ds[j] = e
-#        diff = Program.each_with_index.to_a - try(ds).each_with_index.to_a
-#        diffscore = score diff
-#        if min_d.nil? || (diffscore <=> min) < 0
-#          min = diffscore
-#          min_d = [d, e]
-#        end
-#      end
-#    end
-#    digits[i], digits[j] = min_d
-#  end
-#end
-
-
-p try(digits)
+puts "part 2:"
+puts part2
