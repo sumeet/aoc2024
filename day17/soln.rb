@@ -15,7 +15,7 @@ Program: 2,4,1,3,7,5,0,3,4,3,1,5,5,5,3,0"
 registers, program = input.split "\n\n"
 
 Registers = registers.split("\n").map { |r| r.scan(/\d+/).first.to_i }
-program = program.scan(/\d+/).map(&:to_i)
+Program = program.scan(/\d+/).map(&:to_i)
 
 def combo value
   case value
@@ -72,7 +72,7 @@ def run program
 end
 
 puts "part 1:"
-puts run(program).join(',')
+puts run(Program).join(',')
 
 
 # 2,4,1,3,7,5,0,3,4,3,1,5,5,5,3,0
@@ -99,9 +99,88 @@ puts run(program).join(',')
 # output register[1] % 8
 
 puts "part 2:"
-Registers[0] = ((2**3)**15)
-Registers[1] = 0
-Registers[2] = 0
-puts "program: #{program.inspect} (#{program.length})"
-output = run(program)
-puts "output: #{output.inspect} (#{output.length})"
+
+def try digits
+  n = digits.map { |d| '%03b' % d }.join.to_i(2) 
+  Registers[0] = n
+  Registers[1] = 0
+  Registers[2] = 0
+  run(Program)
+end
+
+def score diff
+  #[diff.length, diff.map { |d| (d[1] - Program[d[0]]).abs }.sum]
+  diff.length
+end
+
+puts "trying to match"
+puts "#{Program}"
+
+digits = 16.times.map { 1 }
+
+(16.times + 16.times.reverse_each).each do |i|
+  digits[i] = (0...7).min_by do |d|
+    ds = digits.dup
+    ds[i] = d
+    diff = Program.each_with_index.to_a - try(ds).each_with_index.to_a
+    score diff
+  end
+end
+
+(16.times + 16.times.reverse_each).each do |i|
+  digits[i] = (0...7).min_by do |d|
+    ds = digits.dup
+    ds[i] = d
+    diff = Program.each_with_index.to_a - try(ds).each_with_index.to_a
+    score diff
+  end
+end
+
+(16.times.each_cons(4) + 16.times.each_cons(4).reverse_each).each do |i, j, k, l|
+  min = Float::INFINITY
+  min_d = nil
+  (0...7).each do |d|
+    (0...7).each do |e|
+      (0...7).each do |f|
+        (0...7).each do |g|
+          ds = digits.dup
+          ds[i] = d
+          ds[j] = e
+          ds[k] = f
+          ds[l] = g
+          diff = Program.each_with_index.to_a - try(ds).each_with_index.to_a
+          diffscore = score diff
+          if min_d.nil? || (diffscore <=> min) < 0
+            min = diffscore
+            min_d = [d, e, f, g]
+          end
+        end
+      end
+    end
+  end
+  digits[i], digits[j], digits[k], digits[l] = min_d
+end
+
+#16.times.reverse_each do |i|
+#  16.times.reverse_each do |j|
+#    min = Float::INFINITY
+#    min_d = nil
+#    (0...7).each do |d|
+#      (0...7).each do |e|
+#        ds = digits.dup
+#        ds[i] = d
+#        ds[j] = e
+#        diff = Program.each_with_index.to_a - try(ds).each_with_index.to_a
+#        diffscore = score diff
+#        if min_d.nil? || (diffscore <=> min) < 0
+#          min = diffscore
+#          min_d = [d, e]
+#        end
+#      end
+#    end
+#    digits[i], digits[j] = min_d
+#  end
+#end
+
+
+p try(digits)
