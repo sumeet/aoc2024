@@ -1,13 +1,13 @@
-FILENAME = "sample.txt"
+FILENAME = "input.txt"
 
-conns = {} of String => Array(String)
+Conns = {} of String => Array(String)
 File.read_lines(FILENAME).each do |line|
   a, b = line.split("-")
-  (conns[a] ||= [] of String).push(b)
-  (conns[b] ||= [] of String).push(a)
+  (Conns[a] ||= [] of String).push(b)
+  (Conns[b] ||= [] of String).push(a)
 end
 
-combinations_containing_t = conns.keys.combinations(3).select do |comb|
+combinations_containing_t = Conns.keys.combinations(3).select do |comb|
   comb.any? { |n| n.starts_with?("t") }
 end
 
@@ -19,7 +19,7 @@ end
 
 part1 = combinations_containing_t.count do |comb|
   split_with_others(comb).all? do |(x, others)|
-    others.all? { |y| conns[x].includes?(y) }
+    others.all? { |y| Conns[x].includes?(y) }
   end
 end
 
@@ -27,23 +27,19 @@ end
 
 puts "part 2:"
 
-def part2
-  pairs = File.read_lines(FILENAME).map do |line|
-    line.split("-").to_set
-  end.to_set
+res = Conns.keys.flat_map do |pick|
+  Conns[pick].combinations(3).map do |(a, b, c)|
+    ((Conns[pick] | [pick]) & (Conns[a] | [a]) & (Conns[b] | [b]) & (Conns[c] | [c])).to_set
+  end
+end.uniq
 
-  puts "pairs: #{pairs.size}"
+thirteen = res.group_by(&.size)[13]
 
-  (3..).each do |i|
-    combos = pairs.to_a.combinations(i)
-    puts "i: #{i}, combos: #{combos.size}"
-    pairs = combos.map do |comb|
-      union = comb.reduce { |a, b| a | b }
-      union.size == i ? union : nil
-    end.compact.to_set
-
-    return pairs.to_a.first if pairs.size == 1
+# verify
+res = thirteen.select do |group|
+  group.to_a.combinations(2).all? do |(a, b)|
+    Conns[a].includes?(b) && Conns[b].includes?(a)
   end
 end
 
-p part2.to_a.sort.join(",")
+puts res.first.to_a.sort.join(",")
