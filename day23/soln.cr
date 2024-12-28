@@ -1,10 +1,12 @@
 FILENAME = "input.txt"
 
-Conns = {} of String => Array(String)
+Conns = {} of String => Set(String)
 File.read_lines(FILENAME).each do |line|
   a, b = line.split("-")
-  (Conns[a] ||= [] of String).push(b)
-  (Conns[b] ||= [] of String).push(a)
+  (Conns[a] ||= Set(String).new).add(b)
+  (Conns[b] ||= Set(String).new).add(a)
+  Conns[a].add(a)
+  Conns[b].add(b)
 end
 
 combinations_containing_t = Conns.keys.combinations(3).select do |comb|
@@ -17,19 +19,21 @@ def split_with_others(arr)
   end
 end
 
+puts "part 1"
 part1 = combinations_containing_t.count do |comb|
   split_with_others(comb).all? do |(x, others)|
     others.all? { |y| Conns[x].includes?(y) }
   end
 end
+puts part1
 
-# puts "part 1: #{part1}"
 
 puts "part 2:"
 
 res = Conns.keys.flat_map do |pick|
-  Conns[pick].combinations(3).map do |(a, b, c)|
-    ((Conns[pick] | [pick]) & (Conns[a] | [a]) & (Conns[b] | [b]) & (Conns[c] | [c])).to_set
+  Conns[pick].to_a.combinations(3).map do |(a, b, c)|
+    Conns[pick] & Conns[a] & Conns[b] & Conns[c]
+    # ((Conns[pick] | [pick].to_set) & (Conns[a] | [a].to_set) & (Conns[b] | [b].to_) & (Conns[c] | [c]))
   end
 end.uniq
 
@@ -42,4 +46,5 @@ res = thirteen.select do |group|
   end
 end
 
+raise "fail" unless res.size == 1
 puts res.first.to_a.sort.join(",")
