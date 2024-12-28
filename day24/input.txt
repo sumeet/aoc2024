@@ -108,8 +108,18 @@ krm XOR vdc -> z04
 mmr XOR cgr -> z05
 jpp XOR tpv -> z06
 cwn XOR pmt -> z07
+y07 AND x07 -> tcb
+tcb OR fgg -> nqg
+y08 XOR x08 -> hbn
 nqg XOR hbn -> z08
 y09 AND x09 -> z09
+nqg AND hbn -> wqc
+wqc OR pvm -> kgr
+y09 XOR x09 -> fvp
+kgr XOR fvp -> nnf
+fvp AND kgr -> vbr
+nnf OR vbr -> hvg
+y10 XOR x10 -> gtg
 hvg XOR gtg -> z10
 rtw XOR wpq -> z11
 sdh XOR nsg -> z12
@@ -152,7 +162,6 @@ dvb OR wtv -> cdm
 x37 AND y37 -> jdk
 y27 AND x27 -> snj
 cnp OR ddh -> pjt
-fvp AND kgr -> vbr
 fvd OR rpm -> srq
 y08 AND x08 -> pvm
 y43 AND x43 -> nhq
@@ -168,7 +177,6 @@ wjt AND ftt -> htr
 x40 XOR y40 -> bwc
 x42 AND y42 -> tbp
 x34 AND y34 -> tgb
-nqg AND hbn -> wqc
 hkt OR sms -> fqk
 x04 AND y04 -> cjg
 jpp AND tpv -> vqk
@@ -186,7 +194,6 @@ tcv AND gqh -> cdk
 y13 AND x13 -> bfw
 ptt OR bvn -> nnw
 y39 AND x39 -> sms
-y07 AND x07 -> tcb
 x23 XOR y23 -> cnv
 ppp AND pjt -> ptt
 ngc AND sdt -> rbk
@@ -199,7 +206,6 @@ x15 AND y15 -> btb
 cmd AND pfk -> cqw
 mmr AND cgr -> vrk
 x44 XOR y44 -> cbq
-nnf OR vbr -> hvg
 y05 XOR x05 -> cgr
 y37 XOR x37 -> vnh
 y20 AND x20 -> rmn
@@ -223,7 +229,6 @@ x33 XOR y33 -> ngc
 y06 AND x06 -> kgh
 nhh AND cdm -> vmf
 y33 AND x33 -> mdv
-tcb OR fgg -> nqg
 y28 XOR x28 -> cqd
 vmf OR snj -> cfd
 y18 XOR x18 -> ftt
@@ -239,7 +244,6 @@ hsc OR dpq -> mtq
 x42 XOR y42 -> kbv
 y30 XOR x30 -> ddn
 scb AND dnp -> dpq
-y09 XOR x09 -> fvp
 x20 XOR y20 -> gqh
 x28 AND y28 -> dgj
 y41 AND x41 -> pqq
@@ -256,7 +260,6 @@ y05 AND x05 -> hmt
 gtg AND hvg -> wvn
 svv OR cjg -> mmr
 x15 XOR y15 -> qnp
-y10 XOR x10 -> gtg
 vqk OR kgh -> pmt
 kbj AND nsd -> hdc
 mkh AND tvs -> cmn
@@ -276,11 +279,9 @@ dds OR btb -> ddr
 dnw OR dtt -> sdt
 y35 XOR x35 -> cmd
 y38 XOR x38 -> dmh
-y08 XOR x08 -> hbn
 x16 XOR y16 -> wkn
 dtk OR ddn -> mkh
 pht OR dgj -> jmc
-kgr XOR fvp -> nnf
 y06 XOR x06 -> jpp
 x14 XOR y14 -> qjh
 x30 AND y30 -> kqh
@@ -303,7 +304,6 @@ bwc AND fqk -> fvd
 cbq AND kkt -> cdh
 hdc OR bfw -> vnn
 qds OR fcg -> vdc
-wqc OR pvm -> kgr
 jsv OR qsd -> hjp
 tjq OR gwt -> jsj
 msm OR gcn -> fch

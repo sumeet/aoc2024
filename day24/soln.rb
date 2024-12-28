@@ -46,8 +46,8 @@ def add(a, b)
   ZNames.map { |name| eval name }.join.to_i(2)
 end
 
-a = 500
-b = 500
+a = 512
+b = 512
 res = add(a, b)
 puts "got:\t#{res}\t%046b" %  res
 res = a + b
