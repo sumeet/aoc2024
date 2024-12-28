@@ -11,6 +11,10 @@ end
 init, commands = File.read("input.txt").split("\n\n")
 names = []
 
+swaps = {
+  "z09" => "kgr",
+}.flat_map { |k, v| [[k, v], [v, k]] }.to_h
+
 init.split("\n").each do |line|
   lhs, rhs = line.split ": "
   names.push lhs
@@ -21,7 +25,7 @@ commands.split("\n").each do |line|
   code, name = line.split(" -> ")
   names.push name
   code = code.gsub("AND", "&").gsub("XOR", "^").gsub("OR", "|")
-  eval "def #{name} ; #{code} ; end"
+  eval "def #{swaps.fetch(name, name)} ; #{code} ; end"
 end
 
 ZNames = names.select { |name| name.start_with? "z" }.sort!.reverse!
@@ -34,20 +38,20 @@ y_names = names.select { |name| name.start_with? "y" }.sort!.reverse!
 
 def add(a, b)
   ("%045b" % a).chars.each_with_index do |b, i|
-    puts "def x#{'%02d' % (44 - i)} ; #{b} ; end"
+    #puts "def x#{'%02d' % (44 - i)} ; #{b} ; end"
     eval "def x#{'%02d' % (44 - i)} ; #{b} ; end"
   end
 
   ("%045b" % b).chars.each_with_index do |b, i|
-    puts "def y#{'%02d' % (44 - i)} ; #{b} ; end"
+    #puts "def y#{'%02d' % (44 - i)} ; #{b} ; end"
     eval "def y#{'%02d' % (44 - i)} ; #{b} ; end"
   end
 
   ZNames.map { |name| eval name }.join.to_i(2)
 end
 
-a = 512
-b = 512
+a = 1000001
+b = 1000001
 res = add(a, b)
 puts "got:\t#{res}\t%046b" %  res
 res = a + b

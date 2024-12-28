@@ -1,2 +1,3 @@
 y09 AND x09 -> z09
+y09 XOR x09 -> fvp
 

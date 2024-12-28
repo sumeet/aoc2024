@@ -112,10 +112,10 @@ y07 AND x07 -> tcb
 tcb OR fgg -> nqg
 y08 XOR x08 -> hbn
 nqg XOR hbn -> z08
-y09 AND x09 -> fvp
+y09 AND x09 -> z09
 nqg AND hbn -> wqc
 wqc OR pvm -> kgr
-y09 XOR x09 -> z09
+y09 XOR x09 -> fvp
 kgr XOR fvp -> nnf
 fvp AND kgr -> vbr
 nnf OR vbr -> hvg
