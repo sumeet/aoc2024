@@ -14,6 +14,7 @@ names = []
 swaps = {
   "z09" => "nnf",
   "z20" => "nhs",
+  "z30" => "mkh",
 }.flat_map { |k, v| [[k, v], [v, k]] }.to_h
 
 init.split("\n").each do |line|
@@ -49,8 +50,8 @@ def add(a, b)
   ZNames.map { |name| eval name }.join.to_i(2)
 end
 
-a = 0
-b = 1073741824
+a = 11073741826
+b = 10737418352
 res = add(a, b)
 puts "got:\t\t#{res}\t\t%046b" %  res
 res = a + b
